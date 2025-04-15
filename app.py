@@ -19,18 +19,29 @@ def ensemble_predict(inputs_scaled):
     try:
         rf_pred = rf_model.predict(inputs_scaled)
         xgb_pred = xgb_model.predict(inputs_scaled)
-        
-        # Check if the predictions are valid (not empty or None)
-        if rf_pred is None or len(rf_pred) == 0:
-            st.error("❌ Random Forest model returned no prediction.")
+
+        # Check for empty predictions
+        if len(rf_pred) == 0 or len(xgb_pred) == 0:
+            st.error("❌ One of the models returned no predictions!")
             return [None]
-        if xgb_pred is None or len(xgb_pred) == 0:
-            st.error("❌ XGBoost model returned no prediction.")
-            return [None]
-        
+
+        # Log the predictions for debugging
         st.write("✅ RF Prediction:", rf_pred)
         st.write("✅ XGB Prediction:", xgb_pred)
-        
+
+        # Ensure predictions are the correct shape (1D array of predicted values)
+        if len(rf_pred.shape) > 1:  # If it's a 2D array, flatten it
+            rf_pred = rf_pred.flatten()
+
+        if len(xgb_pred.shape) > 1:  # If it's a 2D array, flatten it
+            xgb_pred = xgb_pred.flatten()
+
+        # Check if predictions are of the same shape
+        if len(rf_pred) != len(xgb_pred):
+            st.error("❌ Predictions from both models have different lengths!")
+            return [None]
+
+        # Weighted prediction from the ensemble
         return best_w * rf_pred + (1 - best_w) * xgb_pred
     except Exception as e:
         st.error(f"⚠️ Error during prediction: {e}")
@@ -56,6 +67,7 @@ try:
 
     # Predict
     prediction = ensemble_predict(user_input_scaled)
+    
     if prediction[0] is not None:
         st.subheader("🔋 Predicted Power Output")
         st.metric("MW", f"{prediction[0]:.3f}")
