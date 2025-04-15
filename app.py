@@ -19,8 +19,18 @@ def ensemble_predict(inputs_scaled):
     try:
         rf_pred = rf_model.predict(inputs_scaled)
         xgb_pred = xgb_model.predict(inputs_scaled)
+        
+        # Check if the predictions are valid (not empty or None)
+        if rf_pred is None or len(rf_pred) == 0:
+            st.error("❌ Random Forest model returned no prediction.")
+            return [None]
+        if xgb_pred is None or len(xgb_pred) == 0:
+            st.error("❌ XGBoost model returned no prediction.")
+            return [None]
+        
         st.write("✅ RF Prediction:", rf_pred)
         st.write("✅ XGB Prediction:", xgb_pred)
+        
         return best_w * rf_pred + (1 - best_w) * xgb_pred
     except Exception as e:
         st.error(f"⚠️ Error during prediction: {e}")
