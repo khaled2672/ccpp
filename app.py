@@ -20,7 +20,7 @@ def ensemble_predict(inputs_scaled):
         rf_pred = rf_model.predict(inputs_scaled)
         xgb_pred = xgb_model.predict(inputs_scaled)
 
-        # Check for empty predictions
+        # Check if predictions are empty
         if len(rf_pred) == 0 or len(xgb_pred) == 0:
             st.error("❌ One of the models returned no predictions!")
             return [None]
@@ -61,6 +61,9 @@ exhaust_vacuum = st.slider("Exhaust Vacuum (cm Hg)", 3.0, 12.0, 8.0)
 user_input = np.array([[ambient_temp, ambient_rh, ambient_pressure, exhaust_vacuum]])
 
 try:
+    # Log the raw input to see if they look correct
+    st.write("📝 Raw User Input:", user_input)
+
     # Scale the input
     user_input_scaled = scaler.transform(user_input)
     st.write("🔍 Scaled Input:", user_input_scaled)
