@@ -8,50 +8,49 @@ try:
     xgb_model = joblib.load("xgb_model.pkl")
     scaler = joblib.load("scaler.pkl")
 except FileNotFoundError as e:
-    st.error(f"❌ File not found: {e}")
+    st.error(f"❌ Missing file: {e}")
     st.stop()
 
-# Optimal ensemble weight (update if needed)
-best_w = 1.0  # 100% RF, 0% XGB — change if using a mix
+# Optimal ensemble weight (from optimization)
+best_w = 1.0  # 100% RF
 
-# Prediction function
+# Safe prediction function
 def ensemble_predict(inputs_scaled):
-    rf_pred = rf_model.predict(inputs_scaled)
-    xgb_pred = xgb_model.predict(inputs_scaled)
-    return best_w * rf_pred + (1 - best_w) * xgb_pred
+    try:
+        rf_pred = rf_model.predict(inputs_scaled)
+        xgb_pred = xgb_model.predict(inputs_scaled)
+        st.write("✅ RF Prediction:", rf_pred)
+        st.write("✅ XGB Prediction:", xgb_pred)
+        return best_w * rf_pred + (1 - best_w) * xgb_pred
+    except Exception as e:
+        st.error(f"⚠️ Error during prediction: {e}")
+        return [None]
 
-# Streamlit UI
+# UI
 st.title("⚡ Gas Turbine Power Output Prediction")
+st.markdown("Adjust the inputs to simulate power output:")
 
-st.markdown("Adjust the sliders to simulate conditions:")
-
-# Input sliders
+# User input sliders
 ambient_temp = st.slider("Ambient Temperature (°C)", 10.0, 40.0, 25.0)
 ambient_rh = st.slider("Ambient Relative Humidity (%)", 10.0, 100.0, 60.0)
 ambient_pressure = st.slider("Ambient Pressure (mbar)", 990.0, 1035.0, 1013.0)
 exhaust_vacuum = st.slider("Exhaust Vacuum (cm Hg)", 3.0, 12.0, 8.0)
 
-# User input array
+# Create input array
 user_input = np.array([[ambient_temp, ambient_rh, ambient_pressure, exhaust_vacuum]])
 
 try:
-    # Scale input
+    # Scale the input
     user_input_scaled = scaler.transform(user_input)
-
-    # Debug info (optional, comment out later)
     st.write("🔍 Scaled Input:", user_input_scaled)
 
-    # Predictions
-    rf_pred = rf_model.predict(user_input_scaled)
-    xgb_pred = xgb_model.predict(user_input_scaled)
-    st.write("🌲 RF Prediction:", rf_pred)
-    st.write("📦 XGB Prediction:", xgb_pred)
-
-    predicted_power = ensemble_predict(user_input_scaled)[0]
-
-    # Output
-    st.subheader("🔋 Predicted Power Output")
-    st.metric("MW", f"{predicted_power:.3f}")
+    # Predict
+    prediction = ensemble_predict(user_input_scaled)
+    if prediction[0] is not None:
+        st.subheader("🔋 Predicted Power Output")
+        st.metric("MW", f"{prediction[0]:.3f}")
+    else:
+        st.warning("⚠️ Model did not return a valid prediction.")
 
 except Exception as e:
-    st.error(f"⚠️ Prediction failed: {e}")
+    st.error(f"💥 Unexpected error: {e}")
