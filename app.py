@@ -39,4 +39,3 @@ predicted_power = ensemble_predict(user_input_scaled)[0]
 # Display the result in Streamlit
 st.subheader("🔋 Predicted Power Output")
 st.metric("MW", f"{predicted_power:.3f}")
-streamlit run app.py
