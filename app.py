@@ -33,7 +33,7 @@ st.markdown("Adjust the inputs to simulate power output:")
 # User input sliders
 ambient_temp = st.slider("Ambient Temperature (°C)", 10.0, 40.0, 25.0)
 ambient_rh = st.slider("Ambient Relative Humidity (%)", 10.0, 100.0, 60.0)
-ambient_pressure = st.slider("Ambient Pressure (mbar)", 990.0, 1035.0, 1013.0)
+ambient_pressure = st.slider("Ambient Pressure (mbar)", 790, 900, 1013.0)
 exhaust_vacuum = st.slider("Exhaust Vacuum (cm Hg)", 3.0, 12.0, 8.0)
 
 # Create input array
