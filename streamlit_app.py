@@ -50,3 +50,4 @@ if prediction[0] is not None:
     st.metric("MW", f"{prediction[0]:.3f}")
 else:
     st.warning("⚠️ Model did not return a valid prediction.")
+streamlit run streamlit_app.py
