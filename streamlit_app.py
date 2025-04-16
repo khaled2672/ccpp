@@ -22,8 +22,6 @@ except Exception as e:
 
 # 🔹 Page title
 st.title("⚡ Gas Turbine Power Output Prediction")
-st.write("🧾 Raw user input:", raw_input)
-
 
 # 🔹 Sidebar: User Inputs
 st.sidebar.header("🛠️ Input Parameters")
