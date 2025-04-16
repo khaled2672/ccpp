@@ -13,7 +13,7 @@ try:
     xgb_model = joblib.load("xgb_model.pkl")
     scaler = joblib.load("scaler.pkl")
     FEATURES = joblib.load("features.pkl")
-    FEATURES = list(FEATURES)  # Ensure it's a list of strings
+    FEATURES = list(FEATURES)
     with open("best_weight.txt", "r") as f:
         best_w = float(f.read().strip())
 except Exception as e:
@@ -49,20 +49,11 @@ ensemble_pred = best_w * rf_pred + (1 - best_w) * xgb_pred
 # 🔹 Display Results
 st.subheader("🔋 Predicted Power Output (MW)")
 st.metric("⚡ Ensemble Prediction", f"{ensemble_pred[0]:.3f}")
-FEATURES = joblib.load("features.pkl")
-FEATURES = list(FEATURES)
-
 
 with st.expander("📊 Model Details"):
     st.write(f"• Random Forest Prediction: `{rf_pred[0]:.3f}` MW")
     st.write(f"• XGBoost Prediction: `{xgb_pred[0]:.3f}` MW")
     st.write(f"• Ensemble Weights → RF: `{best_w:.2f}`, XGB: `{1 - best_w:.2f}`")
-FEATURES = joblib.load("features.pkl")
-st.write("🔍 Expected feature order:", FEATURES)
-st.write("📥 Input in that order:", input_df)
 
-FEATURES = list(FEATURES)
-if not os.path.exists("features.pkl"):
-    st.warning("⚠️ 'features.pkl' not found. Please re-run training script to generate it.")
-    st.stop()
-
+# 🔍 Debugging/verification
+st.write("📋 Final ordered input to model:", input_df)
