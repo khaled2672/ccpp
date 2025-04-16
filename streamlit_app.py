@@ -6,6 +6,9 @@ import os
 
 # 🔹 Set page config
 st.set_page_config(page_title="Gas Turbine Power Prediction", page_icon="⚡")
+st.write("📊 Model is predicting on:", input_df)
+st.write("📊 Scaled values being used:", scaled_input)
+
 
 # 🔹 Load models, scaler, feature list, and ensemble weight
 try:
@@ -59,6 +62,3 @@ with st.expander("📊 Model Details"):
 st.write("📋 Final ordered input to model:", input_df)
 ensemble_pred = temp + humidity + pressure + vacuum
 st.metric("⚡ Debug: Sum of inputs", f"{ensemble_pred:.2f}")
-st.write("📊 Model is predicting on:", input_df)
-st.write("📊 Scaled values being used:", scaled_input)
-
