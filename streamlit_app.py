@@ -58,6 +58,9 @@ with st.expander("📊 Model Details"):
     st.write(f"• XGBoost Prediction: `{xgb_pred[0]:.3f}` MW")
     st.write(f"• Ensemble Weights → RF: `{best_w:.2f}`, XGB: `{1 - best_w:.2f}`")
 FEATURES = joblib.load("features.pkl")
+st.write("🔍 Expected feature order:", FEATURES)
+st.write("📥 Input in that order:", input_df)
+
 FEATURES = list(FEATURES)
 if not os.path.exists("features.pkl"):
     st.warning("⚠️ 'features.pkl' not found. Please re-run training script to generate it.")
