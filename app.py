@@ -53,4 +53,6 @@ with st.expander("📊 Model Details"):
     st.write(f"• Random Forest Prediction: `{rf_pred[0]:.3f}` MW")
     st.write(f"• XGBoost Prediction: `{xgb_pred[0]:.3f}` MW")
     st.write(f"• Ensemble Weights → RF: `{best_w:.2f}`, XGB: `{1 - best_w:.2f}`")
+joblib.dump(X.columns.tolist(), "features.pkl")  # 👈 Add this line
+
 
