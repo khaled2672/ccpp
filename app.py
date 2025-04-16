@@ -60,3 +60,5 @@ with st.expander("📊 Model Details"):
     st.write(f"• Ensemble Weights → RF: `{best_w:.2f}`, XGB: `{1 - best_w:.2f}`")
 FEATURES = joblib.load("features.pkl")
 FEATURES = list(FEATURES)
+import streamlit as st
+st.cache_data.clear()
