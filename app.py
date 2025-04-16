@@ -45,4 +45,3 @@ try:
 
 except Exception as e:
     st.error(f"⚠️ Error during prediction: {e}")
-with open("best_weight.txt", "r") as f:
