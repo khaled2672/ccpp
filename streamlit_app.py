@@ -57,3 +57,6 @@ with st.expander("📊 Model Details"):
 
 # 🔍 Debugging/verification
 st.write("📋 Final ordered input to model:", input_df)
+ensemble_pred = temp + humidity + pressure + vacuum
+st.metric("⚡ Debug: Sum of inputs", f"{ensemble_pred:.2f}")
+
