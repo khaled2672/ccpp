@@ -2,6 +2,9 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import joblib
+git add rf_model.pkl xgb_model.pkl scaler.pkl features.pkl best_weight.txt
+git commit -m "Add model, scaler, and features"
+git push
 
 # 🔹 Set page config
 st.set_page_config(page_title="Gas Turbine Power Prediction", page_icon="⚡")
