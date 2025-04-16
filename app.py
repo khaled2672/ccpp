@@ -1,7 +1,9 @@
 import streamlit as st
 import numpy as np
 import joblib
+import pandas as pd
 
+# Set page config
 st.set_page_config(page_title="Gas Turbine Power Output", page_icon="⚡")
 
 # Load models and scaler
@@ -32,29 +34,22 @@ ambient_rh = st.sidebar.slider("💧 Relative Humidity (%)", 10.0, 100.0, 60.0)
 ambient_pressure = st.sidebar.slider("🌬️ Pressure (mbar)", 990.0, 1035.0, 1013.0)
 exhaust_vacuum = st.sidebar.slider("🌀 Exhaust Vacuum (cm Hg)", 3.0, 12.0, 8.0)
 
-user_input = np.array([[ambient_temp, ambient_rh, ambient_pressure, exhaust_vacuum]])
+# Create a dataframe for input and scale it
+FEATURE_ORDER = ['Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']
+user_input_df = pd.DataFrame([[ambient_temp, ambient_rh, ambient_pressure, exhaust_vacuum]], columns=FEATURE_ORDER)
+user_input_scaled = scaler.transform(user_input_df)
 
-try:
-    # Scale input
-    user_input_scaled = scaler.transform(user_input)
+# Predictions
+rf_pred = rf_model.predict(user_input_scaled)
+xgb_pred = xgb_model.predict(user_input_scaled)
+ensemble_pred = best_w * rf_pred + (1 - best_w) * xgb_pred
 
-    # Predictions
-    rf_pred = rf_model.predict(user_input_scaled)
-    xgb_pred = xgb_model.predict(user_input_scaled)
-    ensemble_pred = best_w * rf_pred + (1 - best_w) * xgb_pred
+# Output
+st.subheader("🔋 Predicted Power Output (MW)")
+st.metric("Ensemble Model", f"{ensemble_pred[0]:.3f}")
+st.caption("Prediction is based on a weighted average of Random Forest and XGBoost models.")
 
-    # Output
-    st.subheader("🔋 Predicted Power Output (MW)")
-    st.metric("Ensemble Model", f"{ensemble_pred[0]:.3f}")
-    st.caption("Prediction is based on a weighted average of Random Forest and XGBoost models.")
-
-    with st.expander("🔎 Detailed Model Breakdown"):
-        st.write(f"• Random Forest Prediction: `{rf_pred[0]:.3f}` MW")
-        st.write(f"• XGBoost Prediction: `{xgb_pred[0]:.3f}` MW")
-        st.write(f"• Ensemble Weight → RF: `{best_w:.2f}` | XGB: `{1 - best_w:.2f}`")
-
-except Exception as e:
-    st.error(f"⚠️ Error during prediction: {e}")
-    
-        
-
+with st.expander("🔎 Detailed Model Breakdown"):
+    st.write(f"• Random Forest Prediction: `{rf_pred[0]:.3f}` MW")
+    st.write(f"• XGBoost Prediction: `{xgb_pred[0]:.3f}` MW")
+    st.write(f"• Ensemble Weight → RF: `{best_w:.2f}` | XGB: `{1 - best_w:.2f}`")
