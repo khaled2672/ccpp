@@ -59,4 +59,3 @@ with st.expander("📊 Model Details"):
 
 # 🔍 Debugging/verification
 st.write("📋 Final ordered input to model:", input_df)
-st.write("🔎 Scaled input sent to model:", scaled_input)
