@@ -55,3 +55,10 @@ try:
 
 except Exception as e:
     st.error(f"⚠️ Error during prediction: {e}")
+    try:
+    with open("best_weight.txt", "r") as f:
+        best_w = float(f.read().strip())
+except FileNotFoundError:
+    st.warning("⚠️ best_weight.txt not found. Using default ensemble weight.")
+    best_w = 0.5  # Default fallback
+
