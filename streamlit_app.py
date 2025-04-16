@@ -6,8 +6,6 @@ import os
 
 # 🔹 Set page config
 st.set_page_config(page_title="Gas Turbine Power Prediction", page_icon="⚡")
-st.write("📊 Model is predicting on:", input_df)
-st.write("📊 Scaled values being used:", scaled_input)
 
 
 # 🔹 Load models, scaler, feature list, and ensemble weight
@@ -43,6 +41,9 @@ raw_input = {
 
 input_df = pd.DataFrame([raw_input])[FEATURES]
 scaled_input = scaler.transform(input_df)
+st.write("📊 Model is predicting on:", input_df)
+st.write("📊 Scaled values being used:", scaled_input)
+
 
 # 🔹 Predictions
 rf_pred = rf_model.predict(scaled_input)
