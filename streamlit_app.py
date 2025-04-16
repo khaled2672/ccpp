@@ -50,3 +50,7 @@ if prediction[0] is not None:
     st.metric("MW", f"{prediction[0]:.3f}")
 else:
     st.warning("⚠️ Model did not return a valid prediction.")
+st.write(f"User input: {user_input}")  # Print raw input values
+st.write(f"Scaled input: {user_input_scaled}")  # Print scaled input
+st.write(f"Prediction (RF): {rf_pred}")  # Print RF prediction
+st.write(f"Prediction (XGB): {xgb_pred}")  # Print XGB prediction
