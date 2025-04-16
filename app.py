@@ -58,4 +58,7 @@ with st.expander("📊 Model Details"):
     st.write(f"• Ensemble Weights → RF: `{best_w:.2f}`, XGB: `{1 - best_w:.2f}`")
 FEATURES = joblib.load("features.pkl")
 FEATURES = list(FEATURES)
+if not os.path.exists("features.pkl"):
+    st.warning("⚠️ 'features.pkl' not found. Please re-run training script to generate it.")
+    st.stop()
 
