@@ -1,67 +1,60 @@
 import streamlit as st
 import numpy as np
-import pandas as pd
 import joblib
-git add rf_model.pkl xgb_model.pkl scaler.pkl features.pkl best_weight.txt
-git commit -m "Add model, scaler, and features"
-git push
 
-# 🔹 Set page config
-st.set_page_config(page_title="Gas Turbine Power Prediction", page_icon="⚡")
+st.set_page_config(page_title="Gas Turbine Power Output", page_icon="⚡")
 
-# 🔹 Load models, scaler, feature list, and ensemble weight
+# Load models and scaler
 try:
     rf_model = joblib.load("rf_model.pkl")
     xgb_model = joblib.load("xgb_model.pkl")
     scaler = joblib.load("scaler.pkl")
-    FEATURES = joblib.load("features.pkl")
-    FEATURES = list(FEATURES)  # Ensure it's a list of strings
+except FileNotFoundError as e:
+    st.error(f"❌ Missing model file: {e}")
+    st.stop()
+
+# Load best ensemble weight
+try:
     with open("best_weight.txt", "r") as f:
         best_w = float(f.read().strip())
-except Exception as e:
-    st.error(f"❌ Error loading model files: {e}")
-    st.stop()
+except FileNotFoundError:
+    best_w = 0.5  # default fallback weight
+    st.warning("⚠️ 'best_weight.txt' not found. Using default weight: 0.5")
 
-# 🔹 Page title
+# App title
 st.title("⚡ Gas Turbine Power Output Prediction")
+st.markdown("Use the sliders below to simulate how environmental factors impact the turbine's power output.")
 
-# 🔹 Sidebar: User Inputs
-st.sidebar.header("🛠️ Input Parameters")
-temp = st.sidebar.slider("🌡️ Ambient Temperature (°C)", 10.0, 40.0, 25.0)
-humidity = st.sidebar.slider("💧 Relative Humidity (%)", 10.0, 100.0, 60.0)
-pressure = st.sidebar.slider("🌬️ Ambient Pressure (mbar)", 990.0, 1035.0, 1013.0)
-vacuum = st.sidebar.slider("🌀 Exhaust Vacuum (cm Hg)", 3.0, 12.0, 8.0)
+# Sidebar Inputs
+st.sidebar.header("🧾 Input Parameters")
+ambient_temp = st.sidebar.slider("🌡️ Ambient Temperature (°C)", 10.0, 40.0, 25.0)
+ambient_rh = st.sidebar.slider("💧 Relative Humidity (%)", 10.0, 100.0, 60.0)
+ambient_pressure = st.sidebar.slider("🌬️ Pressure (mbar)", 990.0, 1035.0, 1013.0)
+exhaust_vacuum = st.sidebar.slider("🌀 Exhaust Vacuum (cm Hg)", 3.0, 12.0, 8.0)
 
-# 🔹 Prepare input
-raw_input = {
-    'Ambient Temperature': temp,
-    'Ambient Relative Humidity': humidity,
-    'Ambient Pressure': pressure,
-    'Exhaust Vacuum': vacuum
-}
+user_input = np.array([[ambient_temp, ambient_rh, ambient_pressure, exhaust_vacuum]])
 
-input_df = pd.DataFrame([raw_input])[FEATURES]
-scaled_input = scaler.transform(input_df)
+try:
+    # Scale input
+    user_input_scaled = scaler.transform(user_input)
 
-# 🔹 Predictions
-rf_pred = rf_model.predict(scaled_input)
-xgb_pred = xgb_model.predict(scaled_input)
-ensemble_pred = best_w * rf_pred + (1 - best_w) * xgb_pred
+    # Predictions
+    rf_pred = rf_model.predict(user_input_scaled)
+    xgb_pred = xgb_model.predict(user_input_scaled)
+    ensemble_pred = best_w * rf_pred + (1 - best_w) * xgb_pred
 
-# 🔹 Display Results
-st.subheader("🔋 Predicted Power Output (MW)")
-st.metric("⚡ Ensemble Prediction", f"{ensemble_pred[0]:.3f}")
-FEATURES = joblib.load("features.pkl")
-FEATURES = list(FEATURES)
+    # Output
+    st.subheader("🔋 Predicted Power Output (MW)")
+    st.metric("Ensemble Model", f"{ensemble_pred[0]:.3f}")
+    st.caption("Prediction is based on a weighted average of Random Forest and XGBoost models.")
+
+    with st.expander("🔎 Detailed Model Breakdown"):
+        st.write(f"• Random Forest Prediction: `{rf_pred[0]:.3f}` MW")
+        st.write(f"• XGBoost Prediction: `{xgb_pred[0]:.3f}` MW")
+        st.write(f"• Ensemble Weight → RF: `{best_w:.2f}` | XGB: `{1 - best_w:.2f}`")
+
+except Exception as e:
+    st.error(f"⚠️ Error during prediction: {e}")
 
 
-with st.expander("📊 Model Details"):
-    st.write(f"• Random Forest Prediction: `{rf_pred[0]:.3f}` MW")
-    st.write(f"• XGBoost Prediction: `{xgb_pred[0]:.3f}` MW")
-    st.write(f"• Ensemble Weights → RF: `{best_w:.2f}`, XGB: `{1 - best_w:.2f}`")
-FEATURES = joblib.load("features.pkl")
-FEATURES = list(FEATURES)
-if not os.path.exists("features.pkl"):
-    st.warning("⚠️ 'features.pkl' not found. Please re-run training script to generate it.")
-    st.stop()
 
