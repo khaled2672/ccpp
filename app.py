@@ -46,6 +46,8 @@ ensemble_pred = best_w * rf_pred + (1 - best_w) * xgb_pred
 # 🔹 Display
 st.subheader("🔋 Predicted Power Output (MW)")
 st.metric("Ensemble Prediction", f"{ensemble_pred[0]:.3f}")
+FEATURES = list(FEATURES)  # 🛠 convert to list of strings, in case it's a NumPy array
+input_df = pd.DataFrame([raw_input])[FEATURES]
 
 with st.expander("🔍 Model Details"):
     st.write(f"• Random Forest: `{rf_pred[0]:.3f}` MW")
