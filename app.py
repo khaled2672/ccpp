@@ -49,6 +49,7 @@ ensemble_pred = best_w * rf_pred + (1 - best_w) * xgb_pred
 st.subheader("🔋 Predicted Power Output (MW)")
 st.metric("Ensemble Model", f"{ensemble_pred:.3f}")
 st.caption("Prediction is based on a weighted average of Random Forest and XGBoost models.")
+FEATURES = joblib.load("features.pkl")
 
 with st.expander("🔎 Detailed Model Breakdown"):
     st.write(f"• Random Forest Prediction: `{rf_pred:.3f}` MW")
