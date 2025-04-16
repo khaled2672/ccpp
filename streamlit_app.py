@@ -1,65 +1,47 @@
 import streamlit as st
 import numpy as np
-import pandas as pd
 import joblib
-import os
 
-# 🔹 Set page config
-st.set_page_config(page_title="Gas Turbine Power Prediction", page_icon="⚡")
-
-
-# 🔹 Load models, scaler, feature list, and ensemble weight
+# Load the pre-trained models and scaler
 try:
     rf_model = joblib.load("rf_model.pkl")
     xgb_model = joblib.load("xgb_model.pkl")
     scaler = joblib.load("scaler.pkl")
-    FEATURES = joblib.load("features.pkl")
-    FEATURES = list(FEATURES)
-    with open("best_weight.txt", "r") as f:
-        best_w = float(f.read().strip())
-except Exception as e:
-    st.error(f"❌ Error loading model files: {e}")
+except FileNotFoundError as e:
+    st.error(f"❌ Missing file: {e}")
     st.stop()
 
-# 🔹 Page title
+# Define optimal ensemble weight (from your optimization)
+best_w = 1.0  # 100% RF (You can adjust this if needed)
+
+# Prediction function
+def ensemble_predict(inputs_scaled):
+    try:
+        rf_pred = rf_model.predict(inputs_scaled)
+        xgb_pred = xgb_model.predict(inputs_scaled)
+        return best_w * rf_pred + (1 - best_w) * xgb_pred
+    except Exception as e:
+        st.error(f"⚠️ Error during prediction: {e}")
+        return [None]
+
+# UI for user input (Streamlit interface)
 st.title("⚡ Gas Turbine Power Output Prediction")
 
-# 🔹 Sidebar: User Inputs
-st.sidebar.header("🛠️ Input Parameters")
-temp = st.sidebar.slider("🌡️ Ambient Temperature (°C)", 10.0, 40.0, 25.0)
-humidity = st.sidebar.slider("💧 Relative Humidity (%)", 10.0, 100.0, 60.0)
-pressure = st.sidebar.slider("🌬️ Ambient Pressure (mbar)", 990.0, 1035.0, 1013.0)
-vacuum = st.sidebar.slider("🌀 Exhaust Vacuum (cm Hg)", 3.0, 12.0, 8.0)
-st.write("📄 FEATURES.pkl loaded:", FEATURES)
-# 🔹 Prepare input
-raw_input = {
-    'Ambient Temperature': temp,
-    'Ambient Relative Humidity': humidity,
-    'Ambient Pressure': pressure,
-    'Exhaust Vacuum': vacuum
-}
+# Sliders for user input
+ambient_temp = st.slider("Ambient Temperature (°C)", 10.0, 40.0, 25.0)
+ambient_rh = st.slider("Ambient Relative Humidity (%)", 10.0, 100.0, 60.0)
+ambient_pressure = st.slider("Ambient Pressure (mbar)", 990.0, 1035.0, 1013.0)
+exhaust_vacuum = st.slider("Exhaust Vacuum (cm Hg)", 3.0, 12.0, 8.0)
 
-input_df = pd.DataFrame([raw_input])[FEATURES]
-scaled_input = scaler.transform(input_df)
-st.write("📊 Model is predicting on:", input_df)
-st.write("📊 Scaled values being used:", scaled_input)
+# Create input array for prediction
+user_input = np.array([[ambient_temp, ambient_rh, ambient_pressure, exhaust_vacuum]])
 
+# Scale the input and make prediction
+user_input_scaled = scaler.transform(user_input)
+prediction = ensemble_predict(user_input_scaled)
 
-# 🔹 Predictions
-rf_pred = rf_model.predict(scaled_input)
-xgb_pred = xgb_model.predict(scaled_input)
-ensemble_pred = best_w * rf_pred + (1 - best_w) * xgb_pred
-
-# 🔹 Display Results
-st.subheader("🔋 Predicted Power Output (MW)")
-st.metric("⚡ Ensemble Prediction", f"{ensemble_pred[0]:.3f}")
-
-with st.expander("📊 Model Details"):
-    st.write(f"• Random Forest Prediction: `{rf_pred[0]:.3f}` MW")
-    st.write(f"• XGBoost Prediction: `{xgb_pred[0]:.3f}` MW")
-    st.write(f"• Ensemble Weights → RF: `{best_w:.2f}`, XGB: `{1 - best_w:.2f}`")
-
-# 🔍 Debugging/verification
-st.write("📋 Final ordered input to model:", input_df)
-ensemble_pred = temp + humidity + pressure + vacuum
-st.metric("⚡ Debug: Sum of inputs", f"{ensemble_pred:.2f}")
+if prediction[0] is not None:
+    st.subheader("🔋 Predicted Power Output")
+    st.metric("MW", f"{prediction[0]:.3f}")
+else:
+    st.warning("⚠️ Model did not return a valid prediction.")
