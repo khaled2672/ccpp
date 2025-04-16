@@ -50,7 +50,3 @@ if prediction[0] is not None:
     st.metric("MW", f"{prediction[0]:.3f}")
 else:
     st.warning("⚠️ Model did not return a valid prediction.")
-rf_model = joblib.load("/path/to/your/model/rf_model.pkl")
-xgb_model = joblib.load("/path/to/your/model/xgb_model.pkl")
-scaler = joblib.load("/path/to/your/model/scaler.pkl")
-
