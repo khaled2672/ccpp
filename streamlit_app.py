@@ -39,6 +39,11 @@ user_input = np.array([[ambient_temp, ambient_rh, ambient_pressure, exhaust_vacu
 # Scale the input and make prediction
 user_input_scaled = scaler.transform(user_input)
 prediction = ensemble_predict(user_input_scaled)
+# Check input scaling and prediction
+user_input_scaled = scaler.transform(user_input)
+st.write(f"Scaled input: {user_input_scaled}")  # Output the scaled inputs
+prediction = ensemble_predict(user_input_scaled)
+st.write(f"Prediction: {prediction}")  # Output the prediction result
 
 if prediction[0] is not None:
     st.subheader("🔋 Predicted Power Output")
