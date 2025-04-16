@@ -30,7 +30,7 @@ temp = st.sidebar.slider("🌡️ Ambient Temperature (°C)", 10.0, 40.0, 25.0)
 humidity = st.sidebar.slider("💧 Relative Humidity (%)", 10.0, 100.0, 60.0)
 pressure = st.sidebar.slider("🌬️ Ambient Pressure (mbar)", 990.0, 1035.0, 1013.0)
 vacuum = st.sidebar.slider("🌀 Exhaust Vacuum (cm Hg)", 3.0, 12.0, 8.0)
-
+st.write("📄 FEATURES.pkl loaded:", FEATURES)
 # 🔹 Prepare input
 raw_input = {
     'Ambient Temperature': temp,
