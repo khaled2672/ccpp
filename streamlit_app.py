@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -13,6 +12,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 with st.sidebar:
     st.subheader("How to Use")
     st.markdown("""
@@ -20,6 +20,7 @@ with st.sidebar:
     2. View the predicted power output  
     3. Compare models using the toggle  
     """)
+
 # 2. Load Models (cached)
 @st.cache_resource
 def load_models():
@@ -44,7 +45,7 @@ def predict_power(features):
         'rf': models['rf_model'].predict(scaled_features)[0],
         'xgb': models['xgb_model'].predict(scaled_features)[0],
         'ensemble': (models['best_weight'] * models['rf_model'].predict(scaled_features)[0] + 
-                   (1 - models['best_weight']) * models['xgb_model'].predict(scaled_features)[0])
+                     (1 - models['best_weight']) * models['xgb_model'].predict(scaled_features)[0])
     }
 
 # 4. App Interface
@@ -57,7 +58,7 @@ with st.sidebar:
     humidity = st.slider("Relative Humidity (%)", 20.0, 90.0, 60.0)
     pressure = st.slider("Ambient Pressure (mbar)", 797.0, 801.0, 799.0)
     exhaust_vacuum = st.slider("Exhaust Vacuum (cmHg)", 3.0, 12.0, 7.0)
-    show_individual = st.toggle("Show Individual Model Predictions", True)
+    show_individual = st.checkbox("Show Individual Model Predictions", value=True)
 
 # Get predictions
 current_features = [ambient_temp, humidity, pressure, exhaust_vacuum]
@@ -123,6 +124,8 @@ with col2:
     fig4, ax4 = plt.subplots()
     sns.heatmap(corr, annot=True, ax=ax4, cmap='coolwarm', center=0)
     st.pyplot(fig4)
+
+# 5. Batch Prediction with CSV Upload
 st.subheader("📂 Upload CSV for Batch Prediction")
 uploaded_file = st.file_uploader("Upload input data (CSV format)", type=["csv"])
 
@@ -130,15 +133,24 @@ if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     st.write("📊 Uploaded Data", df.head())
 
-    if all(col in df.columns for col in ['Ambient Temperature', 'Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']):
-        scaled = models['scaler'].transform(df[['Ambient Temperature', 'Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']])
+    # Check for required columns in the CSV
+    required_columns = ['Ambient Temperature', 'Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']
+    if all(col in df.columns for col in required_columns):
+        # Use the best ensemble weight in batch prediction
+        weight = models['best_weight']
+
+        # Process CSV and make predictions
+        scaled = models['scaler'].transform(df[required_columns])
         rf_preds = models['rf_model'].predict(scaled)
         xgb_preds = models['xgb_model'].predict(scaled)
         final_preds = weight * rf_preds + (1 - weight) * xgb_preds
+        
+        # Add predictions to the dataframe
         df['Predicted Power (MW)'] = final_preds
         st.write("⚡ Predictions", df)
 
+        # Allow user to download results as CSV
         csv = df.to_csv(index=False).encode()
         st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
     else:
-        st.error("CSV must contain: Ambient Temperature, Relative Humidity, Ambient Pressure, Exhaust Vacuum")
+        st.error(f"CSV must contain: {', '.join(required_columns)}")
