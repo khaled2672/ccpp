@@ -107,10 +107,20 @@ with st.expander("ℹ️ How these predictions were made"):
     
     Feature importance shows which parameters most affect each model's predictions.
     """.format(weight*100, (1-weight)*100
-              # Correlation matrix
-    st.subheader("Feature Correlations")
-    corr = pd.DataFrame(np.random.randn(100, 5), 
-                      columns=['Temp', 'Humidity', 'Pressure', 'Vacuum', 'Power']).corr()
-    fig2, ax2 = plt.subplots()
-    sns.heatmap(corr, annot=True, ax=ax2)
-    st.pyplot(fig2)
+               col1, col2 = st.columns(2)
+
+with col1:
+    current_features = [ambient_temp, humidity, pressure, exhaust_vacuum]
+    power = predict_power(current_features, weight)
+    st.metric("Predicted Power Output", f"{power:.2f} MW")
+    
+    # Feature importance plot
+    st.subheader("Feature Importance")
+    fig, ax = plt.subplots()
+    pd.Series(
+        models['rf_model'].feature_importances_,
+        index=['Temp', 'Humidity', 'Pressure', 'Vacuum']
+    ).plot(kind='barh', ax=ax)
+    st.pyplot(fig)
+
+              
