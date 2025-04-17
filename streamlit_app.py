@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import joblib
-
 # Load models and scaler
 rf_model = joblib.load("rf_model.pkl")
 xgb_model = joblib.load("xgb_model.pkl")
