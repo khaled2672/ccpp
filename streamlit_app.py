@@ -1,4 +1,5 @@
 import pyswarms as ps
+import streamlit as st
 from pyswarms.single.global_best import GlobalBestPSO
 
 def objective_function(x):
