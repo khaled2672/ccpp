@@ -48,7 +48,34 @@ def predict_power(features):
                      (1 - models['best_weight']) * models['xgb_model'].predict(scaled_features)[0])
     }
 
-# 4. App Interface
+# 4. Function to map CSV columns to required columns
+def map_columns(df):
+    """Map user-uploaded CSV columns to the required features."""
+    column_mapping = {
+        "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature"],
+        "Relative Humidity": ["Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)"],
+        "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)"],
+        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)"]
+    }
+
+    mapped_columns = {}
+    for target, possible_names in column_mapping.items():
+        for name in possible_names:
+            if name in df.columns:
+                mapped_columns[target] = name
+                break
+    
+    # Check if all required columns are mapped
+    if len(mapped_columns) < 4:
+        missing_cols = [col for col in column_mapping.keys() if col not in mapped_columns]
+        st.error(f"Missing columns: {', '.join(missing_cols)}. Please upload a file with the required columns.")
+        return None
+
+    # Rename the columns to a standard name
+    df = df.rename(columns=mapped_columns)
+    return df
+
+# 5. App Interface
 st.title("⚡ Power Plant Performance Optimizer")
 
 # Sidebar Controls
@@ -125,7 +152,7 @@ with col2:
     sns.heatmap(corr, annot=True, ax=ax4, cmap='coolwarm', center=0)
     st.pyplot(fig4)
 
-# 5. Batch Prediction with CSV Upload
+# 6. Batch Prediction with CSV Upload
 st.subheader("📂 Upload CSV for Batch Prediction")
 uploaded_file = st.file_uploader("Upload input data (CSV format)", type=["csv"])
 
@@ -133,24 +160,23 @@ if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     st.write("📊 Uploaded Data", df.head())
 
-    # Check for required columns in the CSV
-    required_columns = ['Ambient Temperature', 'Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']
-    if all(col in df.columns for col in required_columns):
-        # Use the best ensemble weight in batch prediction
-        weight = models['best_weight']
+    # Automatically map and process the CSV columns
+    df_processed = map_columns(df)
+    if df_processed is not None:
+        st.write("✅ Dataset Columns Mapped Successfully")
 
-        # Process CSV and make predictions
-        scaled = models['scaler'].transform(df[required_columns])
+        # Perform scaling and prediction
+        features = df_processed[["Ambient Temperature", "Relative Humidity", "Ambient Pressure", "Exhaust Vacuum"]]
+        scaled = models['scaler'].transform(features)
         rf_preds = models['rf_model'].predict(scaled)
         xgb_preds = models['xgb_model'].predict(scaled)
-        final_preds = weight * rf_preds + (1 - weight) * xgb_preds
-        
-        # Add predictions to the dataframe
-        df['Predicted Power (MW)'] = final_preds
-        st.write("⚡ Predictions", df)
 
-        # Allow user to download results as CSV
-        csv = df.to_csv(index=False).encode()
+        # Apply ensemble model
+        final_preds = models['best_weight'] * rf_preds + (1 - models['best_weight']) * xgb_preds
+        df_processed['Predicted Power (MW)'] = final_preds
+
+        st.write("⚡ Predictions", df_processed)
+
+        # Download Button
+        csv = df_processed.to_csv(index=False).encode()
         st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
-    else:
-        st.error(f"CSV must contain: {', '.join(required_columns)}")
