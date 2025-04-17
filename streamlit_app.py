@@ -14,7 +14,7 @@ from pyswarms.single.global_best import GlobalBestPSO
 @st.cache
 def load_data():
     # Default preloaded dataset (update path if necessary)
-    df = pd.read_csv("/content/in/data.csv")  # This can be updated to a public dataset URL or static file
+    df = pd.read_csv("/content/data/data.csv")  # This can be updated to a public dataset URL or static file
     target_column = 'Total Power'
     selected_features = ['Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']
 
