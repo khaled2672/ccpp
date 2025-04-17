@@ -81,9 +81,6 @@ ax.set_ylabel("Power Output (MW)")
 ax.set_title("Prediction Comparison Across Models")
 st.pyplot(fig)
 
-# Feature Importance Comparison
-st.subheader("Feature Importance Comparison")
-fig2, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
 
 # RF Importance
 pd.Series(models['rf_model'].feature_importances_, 
