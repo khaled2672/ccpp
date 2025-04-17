@@ -136,3 +136,4 @@ if uploaded_file is not None:
         st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
     else:
         st.error("CSV must contain: Ambient Temperature, Relative Humidity, Ambient Pressure, Exhaust Vacuum")
+ 
