@@ -60,14 +60,7 @@ with col1:
     power = predict_power(current_features, weight)
     st.metric("Predicted Power Output", f"{power:.2f} MW")
     
-    # Feature importance plot
-    st.subheader("Feature Importance")
-    fig, ax = plt.subplots()
-    pd.Series(
-        models['rf_model'].feature_importances_,
-        index=['Temp', 'Humidity', 'Pressure', 'Vacuum']
-    ).plot(kind='barh', ax=ax)
-    st.pyplot(fig)
+    
 
 with col2:
     # Correlation matrix
