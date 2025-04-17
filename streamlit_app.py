@@ -1,10 +1,5 @@
 # app.py
 import streamlit as st
-import numpy as np
-import pandas as pd
-import joblib
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 # 1. SET PAGE CONFIG (MUST BE FIRST STREAMLIT COMMAND)
 st.set_page_config(
@@ -14,7 +9,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Load Models (cached)
+# 2. Now import other libraries AFTER set_page_config
+import numpy as np
+import pandas as pd
+import joblib
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 3. Load Models (cached)
 @st.cache_resource
 def load_models():
     try:
@@ -30,22 +33,10 @@ def load_models():
 
 models = load_models()
 
-# 3. Prediction Functions
-def predict_power(features, weight):
-    """Make prediction using ensemble model"""
-    scaled_features = models['scaler'].transform([features])
-    rf_pred = models['rf_model'].predict(scaled_features)[0]
-    xgb_pred = models['xgb_model'].predict(scaled_features)[0]
-    return {
-        'ensemble': weight * rf_pred + (1 - weight) * xgb_pred,
-        'rf': rf_pred,
-        'xgb': xgb_pred
-    }
-
-# 4. App Interface
+# 4. App Title (AFTER set_page_config)
 st.title("⚡ Power Plant Performance Optimizer")
 
-# Sidebar Controls
+# 5. Sidebar Inputs
 with st.sidebar:
     st.header("Control Panel")
     ambient_temp = st.slider("Ambient Temperature (°C)", 16.0, 38.0, 25.0)
@@ -54,60 +45,15 @@ with st.sidebar:
     exhaust_vacuum = st.slider("Exhaust Vacuum (cmHg)", 3.0, 12.0, 7.0)
     weight = st.slider("RF/XGB Weight Ratio", 0.0, 1.0, models['best_weight'])
 
-# Main Content
-current_features = [ambient_temp, humidity, pressure, exhaust_vacuum]
-predictions = predict_power(current_features, weight)
+# 6. Main Content
+def predict_power(features, weight):
+    """Make prediction using ensemble model"""
+    scaled_features = models['scaler'].transform([features])
+    rf_pred = models['rf_model'].predict(scaled_features)[0]
+    xgb_pred = models['xgb_model'].predict(scaled_features)[0]
+    return weight * rf_pred + (1 - weight) * xgb_pred
 
-# Prediction Display
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric("Random Forest Prediction", f"{predictions['rf']:.2f} MW")
-with col2:
-    st.metric("XGBoost Prediction", f"{predictions['xgb']:.2f} MW")
-with col3:
-    st.metric("Ensemble Prediction", f"{predictions['ensemble']:.2f} MW", 
-             delta=f"{(predictions['ensemble']-np.mean([predictions['rf'], predictions['xgb']])):.2f} vs average")
-
-# Model Comparison Visualization
-st.subheader("Model Comparison")
-fig, ax = plt.subplots(figsize=(10, 4))
-models_data = {
-    'Random Forest': predictions['rf'],
-    'XGBoost': predictions['xgb'],
-    'Ensemble': predictions['ensemble']
-}
-pd.Series(models_data).plot(kind='bar', ax=ax, color=['#1f77b4', '#ff7f0e', '#2ca02c'])
-ax.set_ylabel("Power Output (MW)")
-ax.set_title("Prediction Comparison Across Models")
-st.pyplot(fig)
-
-# Feature Importance Comparison
-st.subheader("Feature Importance Comparison")
-fig2, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-
-# RF Importance
-pd.Series(models['rf_model'].feature_importances_, 
-         index=['Temp', 'Humidity', 'Pressure', 'Vacuum']
-        ).plot(kind='barh', ax=ax1, title='Random Forest', color='#1f77b4')
-
-# XGB Importance
-pd.Series(models['xgb_model'].feature_importances_, 
-         index=['Temp', 'Humidity', 'Pressure', 'Vacuum']
-        ).plot(kind='barh', ax=ax2, title='XGBoost', color='#ff7f0e')
-
-plt.tight_layout()
-st.pyplot(fig2)
-
-# Prediction Explanation
-with st.expander("ℹ️ How these predictions were made"):
-    st.markdown("""
-    - **Random Forest**: Ensemble of decision trees averaging multiple predictions
-    - **XGBoost**: Gradient boosted trees with sequential error correction
-    - **Ensemble**: Weighted combination of both models (RF: {:.0f}%, XGB: {:.0f}%)
-    
-    Feature importance shows which parameters most affect each model's predictions.
-    """.format(weight*100, (1-weight)*100
-               col1, col2 = st.columns(2)
+col1, col2 = st.columns(2)
 
 with col1:
     current_features = [ambient_temp, humidity, pressure, exhaust_vacuum]
@@ -123,4 +69,11 @@ with col1:
     ).plot(kind='barh', ax=ax)
     st.pyplot(fig)
 
-              
+with col2:
+    # Correlation matrix
+    st.subheader("Feature Correlations")
+    corr = pd.DataFrame(np.random.randn(100, 5), 
+                      columns=['Temp', 'Humidity', 'Pressure', 'Vacuum', 'Power']).corr()
+    fig2, ax2 = plt.subplots()
+    sns.heatmap(corr, annot=True, ax=ax2)
+    st.pyplot(fig2)
