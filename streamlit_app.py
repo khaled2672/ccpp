@@ -21,7 +21,7 @@ def load_data():
     # Feature scaling for PSO
     feature_scaler = MinMaxScaler()
     df[selected_features] = feature_scaler.fit_transform(df[selected_features])
-    joblib.dump(feature_scaler, "feature_scaler.pkl")
+    joblib.dump(feature_scaler, "/content/feature_scaler.pkl")
 
     X = df[selected_features]
     y = df[target_column]
