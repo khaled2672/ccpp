@@ -82,7 +82,7 @@ st.title("⚡ Power Plant Performance Optimizer")
 with st.sidebar:
     st.header("Control Panel")
     ambient_temp = st.slider("Ambient Temperature (°C)", 16.0, 38.0, 25.0)
-    humidity = st.slider("Relative Humidity (%)", 20.0, 90.0, 60.0)
+    humidity = st.slider("Ambient Relative Humidity (%)", 20.0, 90.0, 60.0)
     pressure = st.slider("Ambient Pressure (mbar)", 797.0, 801.0, 799.0)
     exhaust_vacuum = st.slider("Exhaust Vacuum (cmHg)", 3.0, 12.0, 7.0)
     show_individual = st.checkbox("Show Individual Model Predictions", value=True)
@@ -166,7 +166,7 @@ if uploaded_file is not None:
         st.write("✅ Dataset Columns Mapped Successfully")
 
         # Perform scaling and prediction
-        features = df_processed[["Ambient Temperature", "Relative Humidity", "Ambient Pressure", "Exhaust Vacuum"]]
+        features = df_processed[["Ambient Temperature", "Ambient Relative Humidity", "Ambient Pressure", "Exhaust Vacuum"]]
         scaled = models['scaler'].transform(features)
         rf_preds = models['rf_model'].predict(scaled)
         xgb_preds = models['xgb_model'].predict(scaled)
