@@ -117,3 +117,22 @@ with col2:
     fig4, ax4 = plt.subplots()
     sns.heatmap(corr, annot=True, ax=ax4, cmap='coolwarm', center=0)
     st.pyplot(fig4)
+st.subheader("📂 Upload CSV for Batch Prediction")
+uploaded_file = st.file_uploader("Upload input data (CSV format)", type=["csv"])
+
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
+    st.write("📊 Uploaded Data", df.head())
+
+    if all(col in df.columns for col in ['Ambient Temperature', 'Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']):
+        scaled = models['scaler'].transform(df[['Ambient Temperature', 'Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']])
+        rf_preds = models['rf_model'].predict(scaled)
+        xgb_preds = models['xgb_model'].predict(scaled)
+        final_preds = weight * rf_preds + (1 - weight) * xgb_preds
+        df['Predicted Power (MW)'] = final_preds
+        st.write("⚡ Predictions", df)
+
+        csv = df.to_csv(index=False).encode()
+        st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
+    else:
+        st.error("CSV must contain: Ambient Temperature, Relative Humidity, Ambient Pressure, Exhaust Vacuum")
