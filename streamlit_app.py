@@ -139,7 +139,7 @@ if uploaded_file is not None:
         st.write("⚡ Predictions", df)
     models = {"rf_model": DummyModel(), "xgb_model": DummyModel(), "best_weight": 0.5}
     csv = df.to_csv(index=False).encode()
-        st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
+    st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
     else:
         st.error("CSV must contain: Ambient Temperature, Relative Humidity, Ambient Pressure, Exhaust Vacuum")
         try:
