@@ -1,3 +1,8 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import joblib
+
 # 1. Load Models
 @st.cache_resource
 def load_models():
@@ -16,7 +21,7 @@ models = load_models()
 
 # 2. Preprocess the dataset
 def preprocess_data(df):
-    # Automatic column detection and mapping
+    # Column mapping to handle different column names
     column_mapping = {
         "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp"],
         "Relative Humidity": ["Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)"],
@@ -32,8 +37,10 @@ def preprocess_data(df):
                 processed_columns[target] = name
                 break
 
+    # Check if all required columns are mapped
     if len(processed_columns) < 4:
-        st.error("CSV file is missing required columns!")
+        missing_cols = [col for col in column_mapping.keys() if col not in processed_columns]
+        st.error(f"Missing columns: {', '.join(missing_cols)}. Please upload a file with the required columns.")
         return None
 
     # Rename columns to match expected names
