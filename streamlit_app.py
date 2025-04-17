@@ -45,59 +45,36 @@ def objective_function(x):
         preds.append(-ensemble_pred)  # PSO minimizes, so negate
     return np.array(preds)
 
-# File uploader
-st.title("⚡ Power Plant Performance Optimizer")
+# Optimization trigger button
+if st.button("🔍 Optimize Inputs for Max Power"):
+    st.info("Running optimization... please wait ⏳")
+    
+    lb = [b[0] for b in feature_bounds.values()] + [0.0]
+    ub = [b[1] for b in feature_bounds.values()] + [1.0]
+    bounds = (lb, ub)
 
-uploaded_file = st.file_uploader("Upload CSV with Features", type=["csv"])
+    # Initialize PSO optimizer
+    optimizer = GlobalBestPSO(
+        n_particles=30,
+        dimensions=5,
+        options={'c1': 0.5, 'c2': 0.3, 'w': 0.9},
+        bounds=bounds
+    )
 
-if uploaded_file is not None:
-    # Read and display the CSV
-    data = pd.read_csv(uploaded_file)
-    st.write("Uploaded Data:", data)
+    # Run the optimizer
+    cost, pos = optimizer.optimize(objective_function, iters=50)
 
-    # Check if the CSV contains the required columns
-    required_columns = ["Ambient Temperature", "Relative Humidity", "Ambient Pressure", "Exhaust Vacuum"]
-    missing_columns = [col for col in required_columns if col not in data.columns]
+    # Extract optimized values
+    best_features = pos[:-1]
+    best_weight = pos[-1]
+    scaled_input = models['scaler'].transform([best_features])
+    rf_pred = models['rf_model'].predict(scaled_input)[0]
+    xgb_pred = models['xgb_model'].predict(scaled_input)[0]
+    final_pred = best_weight * rf_pred + (1 - best_weight) * xgb_pred
 
-    if len(missing_columns) > 0:
-        st.error(f"Missing required columns: {', '.join(missing_columns)}")
-    else:
-        st.success("CSV file contains the necessary columns!")
-
-        # You can now run the optimization on the uploaded data
-        # Here, we take the first row from the CSV as the input for optimization
-        input_features = data.iloc[0][required_columns].values.tolist()
-
-        # PSO optimization trigger button
-        if st.button("🔍 Optimize Inputs for Max Power"):
-            st.info("Running optimization... please wait ⏳")
-            
-            lb = [b[0] for b in feature_bounds.values()] + [0.0]
-            ub = [b[1] for b in feature_bounds.values()] + [1.0]
-            bounds = (lb, ub)
-
-            # Initialize PSO optimizer
-            optimizer = GlobalBestPSO(
-                n_particles=30,
-                dimensions=5,
-                options={'c1': 0.5, 'c2': 0.3, 'w': 0.9},
-                bounds=bounds
-            )
-
-            # Run the optimizer
-            cost, pos = optimizer.optimize(objective_function, iters=50)
-
-            # Extract optimized values
-            best_features = pos[:-1]
-            best_weight = pos[-1]
-            scaled_input = models['scaler'].transform([best_features])
-            rf_pred = models['rf_model'].predict(scaled_input)[0]
-            xgb_pred = models['xgb_model'].predict(scaled_input)[0]
-            final_pred = best_weight * rf_pred + (1 - best_weight) * xgb_pred
-
-            # Display results
-            st.success(f"⚡ Max Predicted Power: {final_pred:.2f} MW")
-            st.subheader("🔧 Optimal Input Settings:")
-            for name, val in zip(feature_bounds.keys(), best_features):
-                st.write(f"- {name}: {val:.2f}")
-            st.write(f"⚖️ Optimized Ensemble Weight: RF = {best_weight:.2f}, XGB = {1 - best_weight:.2f}")
+    # Display results
+    st.success(f"⚡ Max Predicted Power: {final_pred:.2f} MW")
+    st.subheader("🔧 Optimal Input Settings:")
+    for name, val in zip(feature_bounds.keys(), best_features):
+        st.write(f"- {name}: {val:.2f}")
+    st.write(f"⚖️ Optimized Ensemble Weight: RF = {best_weight:.2f}, XGB = {1 - best_weight:.2f}")
