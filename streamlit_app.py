@@ -11,12 +11,11 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from pyswarms.single.global_best import GlobalBestPSO
 
-# 1️⃣ Load a default dataset
+# 1️⃣ Load data from a local CSV file
 @st.cache
 def load_data():
-    # Example dataset; replace with your own if needed
-    url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00360/Temperature%20and%20Humidity%20Dataset.csv'
-    df = pd.read_csv(url)
+    # Load your dataset (make sure you have 'data.csv' in your project folder)
+    df = pd.read_csv('data.csv')
     df = df[['Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum', 'Total Power']]
     return df
 
