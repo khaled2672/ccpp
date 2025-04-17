@@ -5,7 +5,13 @@ import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+with st.sidebar:
+    st.subheader("How to Use")
+    st.markdown("""
+    1. Adjust sliders to set plant conditions  
+    2. View the predicted power output  
+    3. Compare models using the toggle  
+    """)
 # 1. SET PAGE CONFIG (MUST BE FIRST STREAMLIT COMMAND)
 st.set_page_config(
     page_title="Power Plant Optimization",
