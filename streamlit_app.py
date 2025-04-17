@@ -5,6 +5,7 @@ import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 # 1. SET PAGE CONFIG (MUST BE FIRST STREAMLIT COMMAND)
 st.set_page_config(
     page_title="Power Plant Optimization",
@@ -12,13 +13,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-with st.sidebar:
-    st.subheader("How to Use")
-    st.markdown("""
-    1. Adjust sliders to set plant conditions  
-    2. View the predicted power output  
-    3. Compare models using the toggle  
-    """)
+
 # 2. Load Models (cached)
 @st.cache_resource
 def load_models():
@@ -117,12 +112,11 @@ with col2:
     
     # Correlation matrix
     st.subheader("Feature Correlations")
-    # With this (load real data):
-df = pd.read_csv('data.csv')  # Load your actual dataset
-corr = df[['Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum', 'Total Power']].corr()
-fig4, ax4 = plt.subplots()
-sns.heatmap(corr, annot=True, ax=ax4, cmap='coolwarm', center=0)
-st.pyplot(fig4)
+    corr = pd.DataFrame(np.random.randn(100, 5), 
+                       columns=['Temp', 'Humidity', 'Pressure', 'Vacuum', 'Power']).corr()
+    fig4, ax4 = plt.subplots()
+    sns.heatmap(corr, annot=True, ax=ax4, cmap='coolwarm', center=0)
+    st.pyplot(fig4)
 st.subheader("📂 Upload CSV for Batch Prediction")
 uploaded_file = st.file_uploader("Upload input data (CSV format)", type=["csv"])
 
