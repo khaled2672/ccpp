@@ -85,7 +85,7 @@ st.pyplot(fig)
 # RF Importance
 pd.Series(models['rf_model'].feature_importances_, 
          index=['Temp', 'Humidity', 'Pressure', 'Vacuum']
-        ).plot(kind='barh', ax=ax1, title='Random Forest', color='#1f77b4')
+        plot(kind='barh', ax=ax1, title='Random Forest', color='#1f77b4')
 
 # XGB Importance
 pd.Series(models['xgb_model'].feature_importances_, 
