@@ -11,137 +11,99 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from pyswarms.single.global_best import GlobalBestPSO
 
-# 1️⃣ Load data from a local CSV file
-@st.cache
+# ------------------------------------------
+# 1️⃣ Load dataset
+@st.cache_data
 def load_data():
-    # Load your dataset (make sure you have 'data.csv' in your project folder)
-    df = pd.read_csv('data.csv')
+    df = pd.read_csv('data.csv')  # Make sure data.csv is in the same folder
     df = df[['Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum', 'Total Power']]
     return df
 
-# 2️⃣ Set up feature columns and target column
-selected_features = ['Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']
-target_column = 'Total Power'
-
-# 3️⃣ Preprocess Data and Train Models
-@st.cache(allow_output_mutation=True)
+# ------------------------------------------
+# 2️⃣ Preprocess and Train Once
+@st.cache_resource
 def preprocess_and_train(df):
-    # Separate features and target
+    selected_features = ['Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']
+    target_column = 'Total Power'
+
     X = df[selected_features]
     y = df[target_column]
 
-    # Scale features
+    # Scale features using MinMaxScaler for PSO input
     feature_scaler = MinMaxScaler()
     X_scaled = feature_scaler.fit_transform(X)
-    joblib.dump(feature_scaler, "feature_scaler.pkl")
-    
-    # Train-test split
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
-    # StandardScaler for model training
+    # Then standard scale for model training
     standard_scaler = StandardScaler()
-    X_train_scaled = standard_scaler.fit_transform(X_train)
-    X_test_scaled = standard_scaler.transform(X_test)
-    joblib.dump(standard_scaler, "standard_scaler.pkl")
+    X_scaled_std = standard_scaler.fit_transform(X_scaled)
 
-    # Define models
-    rf_model = RandomForestRegressor(n_estimators=100, max_depth=15, random_state=42)
-    xgb_model = XGBRegressor(n_estimators=300, max_depth=9, learning_rate=0.2, subsample=0.9, random_state=50, verbosity=0)
+    # Train-test split
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled_std, y, test_size=0.2, random_state=42)
 
     # Train models
-    rf_model.fit(X_train_scaled, y_train)
-    xgb_model.fit(X_train_scaled, y_train)
+    rf = RandomForestRegressor(n_estimators=100, max_depth=15, random_state=42)
+    xgb = XGBRegressor(n_estimators=300, max_depth=9, learning_rate=0.2, subsample=0.9, random_state=50, verbosity=0)
 
-    # Save models
-    joblib.dump(rf_model, "rf_model.pkl")
-    joblib.dump(xgb_model, "xgb_model.pkl")
+    rf.fit(X_train, y_train)
+    xgb.fit(X_train, y_train)
 
-    return rf_model, xgb_model, X_test_scaled, y_test, feature_scaler, standard_scaler
+    return rf, xgb, feature_scaler, standard_scaler, X_test, y_test
 
-# 4️⃣ Ensemble optimization function
-def ensemble_predict(features, rf_model, xgb_model, best_w, feature_scaler, standard_scaler):
-    # Scale the features using the preloaded scaler
-    scaled_input = standard_scaler.transform(feature_scaler.transform(features.reshape(1, -1)))
-    
-    # Get predictions from both models
-    rf_pred = rf_model.predict(scaled_input)
-    xgb_pred = xgb_model.predict(scaled_input)
-    
-    # Weighted ensemble prediction
-    return best_w * rf_pred + (1 - best_w) * xgb_pred
+# ------------------------------------------
+# 3️⃣ Predict using ensemble
+def ensemble_predict(features, rf, xgb, weight, feature_scaler, standard_scaler):
+    features_scaled = feature_scaler.transform(features.reshape(1, -1))
+    features_std = standard_scaler.transform(features_scaled)
+    rf_pred = rf.predict(features_std)
+    xgb_pred = xgb.predict(features_std)
+    return weight * rf_pred + (1 - weight) * xgb_pred
 
-# 5️⃣ PSO optimization for ensemble weight
-def pso_optimization(X_test_scaled, y_test, rf_model, xgb_model, feature_scaler):
+# ------------------------------------------
+# 4️⃣ Optimize blending weight using PSO
+def optimize_weight(rf, xgb, X_test, y_test):
     def objective_function(x):
         preds = []
         for i in range(x.shape[0]):
-            input_features = x[i, :-1]  # Last element is the ensemble weight
-            w = np.clip(x[i, -1], 0, 1)
-            input_scaled = feature_scaler.transform(input_features.reshape(1, -1))
-            scaled_input = standard_scaler.transform(input_scaled)
-            rf_pred = rf_model.predict(scaled_input)
-            xgb_pred = xgb_model.predict(scaled_input)
-            ensemble_pred = w * rf_pred + (1 - w) * xgb_pred
-            preds.append(-ensemble_pred)
-        return np.ravel(preds)
+            w = np.clip(x[i][0], 0, 1)
+            blended = w * rf.predict(X_test) + (1 - w) * xgb.predict(X_test)
+            loss = mean_squared_error(y_test, blended)
+            preds.append(loss)
+        return np.array(preds)
 
-    # Set bounds for PSO
-    lb = [0.0] * 4 + [0.0]  # Min bounds for each feature and weight
-    ub = [1.0] * 4 + [1.0]  # Max bounds for each feature and weight
-    bounds = (lb, ub)
+    bounds = ([0.0], [1.0])
+    optimizer = GlobalBestPSO(n_particles=20, dimensions=1, options={'c1': 0.5, 'c2': 0.3, 'w': 0.9}, bounds=bounds)
+    best_loss, pos = optimizer.optimize(objective_function, iters=50, verbose=False)
+    return pos[0]
 
-    # Run PSO optimization
-    optimizer = GlobalBestPSO(n_particles=50, dimensions=5, options={'c1': 0.5, 'c2': 0.3, 'w': 0.9}, bounds=bounds)
-    cost, pos = optimizer.optimize(objective_function, iters=100)
+# ------------------------------------------
+# 5️⃣ Streamlit App UI
+def main():
+    st.title("⚡ Power Prediction with RF & XGBoost Ensemble")
 
-    # Return optimal weight
-    optimal_weight = pos[-1]
-    return optimal_weight
-
-# 6️⃣ Streamlit UI
-def run_app():
-    # Load data and models
     df = load_data()
-    rf_model, xgb_model, X_test_scaled, y_test, feature_scaler, standard_scaler = preprocess_and_train(df)
+    rf, xgb, feature_scaler, standard_scaler, X_test, y_test = preprocess_and_train(df)
+    best_weight = optimize_weight(rf, xgb, X_test, y_test)
 
-    # Find the best ensemble weight using PSO
-    optimal_weight = pso_optimization(X_test_scaled, y_test, rf_model, xgb_model, feature_scaler)
-    
-    # Display result
-    st.title("Power Prediction using Optimized Ensemble of RF & XGBoost")
-    st.write(f"Optimized Ensemble Weight: {optimal_weight:.2f} RF / {1 - optimal_weight:.2f} XGB")
-    
-    # Input for prediction
-    st.subheader("Enter Features for Prediction")
-    ambient_temperature = st.slider('Ambient Temperature (°C)', 16.0, 37.0, 25.0)
-    ambient_relative_humidity = st.slider('Ambient Relative Humidity (%)', 20.0, 90.0, 50.0)
-    ambient_pressure = st.slider('Ambient Pressure (hPa)', 797.8, 800.1, 799.0)
-    exhaust_vacuum = st.slider('Exhaust Vacuum (mmHg)', 3.0, 12.0, 7.0)
+    st.markdown(f"### ✅ Optimal Ensemble Weight: {best_weight:.2f} (RF) / {1 - best_weight:.2f} (XGB)")
 
-    # Make prediction
-    input_features = np.array([ambient_temperature, ambient_relative_humidity, ambient_pressure, exhaust_vacuum])
-    predicted_power = ensemble_predict(input_features, rf_model, xgb_model, optimal_weight, feature_scaler, standard_scaler)
+    # Inputs
+    st.subheader("🔧 Input Features")
+    temp = st.slider("Ambient Temperature (°C)", 16.0, 37.0, 25.0)
+    humidity = st.slider("Ambient Relative Humidity (%)", 20.0, 90.0, 50.0)
+    pressure = st.slider("Ambient Pressure (hPa)", 797.8, 800.1, 799.0)
+    vacuum = st.slider("Exhaust Vacuum (mmHg)", 3.0, 12.0, 6.5)
 
-    # Display predicted power
-    st.write(f"Predicted Total Power (MW): {predicted_power[0]:.4f} MW")
+    input_array = np.array([temp, humidity, pressure, vacuum])
+    prediction = ensemble_predict(input_array, rf, xgb, best_weight, feature_scaler, standard_scaler)
 
-    # Show model performance metrics
-    st.subheader("Model Performance Metrics")
-    rf_pred = rf_model.predict(X_test_scaled)
-    xgb_pred = xgb_model.predict(X_test_scaled)
-    rf_r2 = r2_score(y_test, rf_pred)
-    xgb_r2 = r2_score(y_test, xgb_pred)
+    st.success(f"⚡ Predicted Total Power: {prediction[0]:.4f} MW")
 
-    st.write(f"Random Forest R2: {rf_r2:.4f}")
-    st.write(f"XGBoost R2: {xgb_r2:.4f}")
+    # Correlation heatmap
+    st.subheader("📊 Feature Correlation Matrix")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5, ax=ax)
+    st.pyplot(fig)
 
-    # Show correlation matrix
-    st.subheader("Feature Correlation Matrix")
-    correlation_matrix = df.corr()
-    plt.figure(figsize=(12, 8))
-    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
-    st.pyplot()
-
-# Run the app
+# ------------------------------------------
 if __name__ == "__main__":
-    run_app()
+    main()
