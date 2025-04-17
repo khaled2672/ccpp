@@ -1,52 +1,21 @@
 import streamlit as st
 import numpy as np
-import joblib
+import pandas as pd
+from utils import load_models, ensemble_predict
 
-# Load the pre-trained models and scaler
-try:
-    rf_model = joblib.load("rf_model.pkl")
-    xgb_model = joblib.load("xgb_model.pkl")
-    scaler = joblib.load("scaler.pkl")
-except FileNotFoundError as e:
-    st.error(f"❌ Missing file: {e}")
-    st.stop()
+st.set_page_config(page_title="🔌 Power Predictor", layout="centered")
 
-# Define optimal ensemble weight (from your optimization)
-best_w = 1.0  # 100% RF (You can adjust this if needed)
+rf, xgb, scaler, best_w = load_models()
 
-# Prediction function
-def ensemble_predict(inputs_scaled):
-    try:
-        rf_pred = rf_model.predict(inputs_scaled)
-        xgb_pred = xgb_model.predict(inputs_scaled)
-        return best_w * rf_pred + (1 - best_w) * xgb_pred
-    except Exception as e:
-        st.error(f"⚠️ Error during prediction: {e}")
-        return [None]
+st.title("🔌 Power Prediction App")
 
-# UI for user input (Streamlit interface)
-st.title("⚡ Gas Turbine Power Output Prediction")
+# User Inputs
+temp = st.slider("Ambient Temperature (°C)", 15.0, 40.0, 25.78)
+humidity = st.slider("Ambient Relative Humidity (%)", 20.0, 100.0, 60.17)
+pressure = st.slider("Ambient Pressure (mmHg)", 795.0, 805.0, 798.98)
+vacuum = st.slider("Exhaust Vacuum (inHg)", 3.0, 12.0, 10.43)
 
-# Sliders for user input
-ambient_temp = st.slider("Ambient Temperature (°C)", 10.0, 40.0, 25.0)
-ambient_rh = st.slider("Ambient Relative Humidity (%)", 10.0, 100.0, 60.0)
-ambient_pressure = st.slider("Ambient Pressure (mbar)", 990.0, 1035.0, 1013.0)
-exhaust_vacuum = st.slider("Exhaust Vacuum (cm Hg)", 3.0, 12.0, 8.0)
+input_data = np.array([[temp, humidity, pressure, vacuum]])
+pred_power = ensemble_predict(rf, xgb, scaler, best_w, input_data)[0]
 
-# Create input array for prediction
-user_input = np.array([[ambient_temp, ambient_rh, ambient_pressure, exhaust_vacuum]])
-
-# Scale the input and make prediction
-user_input_scaled = scaler.transform(user_input)
-prediction = ensemble_predict(user_input_scaled)
-# Check input scaling and prediction
-user_input_scaled = scaler.transform(user_input)
-st.write(f"Scaled input: {user_input_scaled}")  # Output the scaled inputs
-prediction = ensemble_predict(user_input_scaled)
-st.write(f"Prediction: {prediction}")  # Output the prediction result
-
-if prediction[0] is not None:
-    st.subheader("🔋 Predicted Power Output")
-    st.metric("MW", f"{prediction[0]:.3f}")
-else:
-    st.warning("⚠️ Model did not return a valid prediction.")
+st.metric(label="⚡ Predicted Power Output (MW)", value=f"{pred_power:.4f}")
