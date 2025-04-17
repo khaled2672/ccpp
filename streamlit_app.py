@@ -53,7 +53,7 @@ def map_columns(df):
     """Map user-uploaded CSV columns to the required features."""
     column_mapping = {
         "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature"],
-        "Relative Humidity": ["Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)"],
+        "Relative Humidity": ["Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)"],
         "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)"],
         "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)"]
     }
