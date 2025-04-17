@@ -106,4 +106,11 @@ with st.expander("ℹ️ How these predictions were made"):
     - **Ensemble**: Weighted combination of both models (RF: {:.0f}%, XGB: {:.0f}%)
     
     Feature importance shows which parameters most affect each model's predictions.
-    """.format(weight*100, (1-weight)*100))
+    """.format(weight*100, (1-weight)*100
+              # Correlation matrix
+    st.subheader("Feature Correlations")
+    corr = pd.DataFrame(np.random.randn(100, 5), 
+                      columns=['Temp', 'Humidity', 'Pressure', 'Vacuum', 'Power']).corr()
+    fig2, ax2 = plt.subplots()
+    sns.heatmap(corr, annot=True, ax=ax2)
+    st.pyplot(fig2)
