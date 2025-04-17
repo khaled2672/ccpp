@@ -137,13 +137,14 @@ if uploaded_file is not None:
         final_preds = weight * rf_preds + (1 - weight) * xgb_preds
         df['Predicted Power (MW)'] = final_preds
         st.write("⚡ Predictions", df)
-
+try:
+    models = load_models()
+except:
+    st.warning("Models not found - using demo mode")
+    models = {"rf_model": DummyModel(), "xgb_model": DummyModel(), "best_weight": 0.5}
         csv = df.to_csv(index=False).encode()
         st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
     else:
         st.error("CSV must contain: Ambient Temperature, Relative Humidity, Ambient Pressure, Exhaust Vacuum")
         try:
     models = load_models()
-except:
-    st.warning("Models not found - using demo mode")
-    models = {"rf_model": DummyModel(), "xgb_model": DummyModel(), "best_weight": 0.5}
