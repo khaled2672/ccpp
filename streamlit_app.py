@@ -125,7 +125,6 @@ with col2:
     sns.heatmap(corr, annot=True, ax=ax4, cmap='coolwarm', center=0)
     st.pyplot(fig4)
 
-# 5. Batch Prediction with CSV Upload
 st.subheader("📂 Upload CSV for Batch Prediction")
 uploaded_file = st.file_uploader("Upload input data (CSV format)", type=["csv"])
 
@@ -133,36 +132,14 @@ if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     st.write("📊 Uploaded Data", df.head())
 
-    # Check for required columns in the CSV
-    required_columns = ['Ambient Temperature', 'Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']
-    if all(col in df.columns for col in required_columns):
-        # Use the best ensemble weight in batch prediction
-        weight = models['best_weight']
-
-        st.subheader("📂 Upload CSV for Batch Prediction")
-uploaded_file = st.file_uploader("Upload input data (CSV format)", type=["csv"])
-
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    st.write("📊 Uploaded Data", df.head())
-
-    # Check if CSV contains necessary columns
     if all(col in df.columns for col in ['Ambient Temperature', 'Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']):
-        # Scale the features for prediction
         scaled = models['scaler'].transform(df[['Ambient Temperature', 'Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum']])
-        
-        # Make predictions with both models
         rf_preds = models['rf_model'].predict(scaled)
         xgb_preds = models['xgb_model'].predict(scaled)
-        
-        # Final ensemble prediction
-        final_preds = models['best_weight'] * rf_preds + (1 - models['best_weight']) * xgb_preds
+        final_preds = weight * rf_preds + (1 - weight) * xgb_preds
         df['Predicted Power (MW)'] = final_preds
-        
-        # Display predictions
         st.write("⚡ Predictions", df)
 
-        # Allow user to download the result as a CSV
         csv = df.to_csv(index=False).encode()
         st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
     else:
