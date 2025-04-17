@@ -116,8 +116,8 @@ with col2:
 df = pd.read_csv('data.csv')  # Load your actual dataset
 corr = df[['Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure', 'Exhaust Vacuum', 'Total Power']].corr()
 fig4, ax4 = plt.subplots()
-    sns.heatmap(corr, annot=True, ax=ax4, cmap='coolwarm', center=0)
-    st.pyplot(fig4)
+sns.heatmap(corr, annot=True, ax=ax4, cmap='coolwarm', center=0)
+st.pyplot(fig4)
 st.subheader("📂 Upload CSV for Batch Prediction")
 uploaded_file = st.file_uploader("Upload input data (CSV format)", type=["csv"])
 
