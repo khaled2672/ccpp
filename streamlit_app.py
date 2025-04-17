@@ -13,7 +13,13 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
+with st.sidebar:
+    st.subheader("How to Use")
+    st.markdown("""
+    1. Adjust sliders to set plant conditions  
+    2. View the predicted power output  
+    3. Compare models using the toggle  
+    """)
 # 2. Load Models (cached)
 @st.cache_resource
 def load_models():
