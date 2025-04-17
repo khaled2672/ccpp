@@ -81,11 +81,14 @@ ax.set_ylabel("Power Output (MW)")
 ax.set_title("Prediction Comparison Across Models")
 st.pyplot(fig)
 
+# Feature Importance Comparison
+st.subheader("Feature Importance Comparison")
+fig2, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
 
 # RF Importance
 pd.Series(models['rf_model'].feature_importances_, 
          index=['Temp', 'Humidity', 'Pressure', 'Vacuum']
-        plot(kind='barh', ax=ax1, title='Random Forest', color='#1f77b4')
+        ).plot(kind='barh', ax=ax1, title='Random Forest', color='#1f77b4')
 
 # XGB Importance
 pd.Series(models['xgb_model'].feature_importances_, 
