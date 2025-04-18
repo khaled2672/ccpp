@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import mean_absolute_error
 
-# 1. SET PAGE CONFIG (MUST BE FIRST STREAMLIT COMMAND)
+# 1. SET PAGE CONFIG
 st.set_page_config(
     page_title="Power Plant Optimization",
     page_icon="⚡",
@@ -60,7 +60,8 @@ def map_columns(df):
         "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature"],
         "Relative Humidity": ["Relative Humidity","Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)"],
         "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)"],
-        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)"]
+        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)"],
+        "Actual Power": ["Total Power","Actual Power", "Power", "Power Output", "ActualPower", "Power (MW)", "Output Power", "Power Generation"]
     }
 
     mapped_columns = {}
