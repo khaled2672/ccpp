@@ -14,6 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Sidebar Instructions
 with st.sidebar:
     st.subheader("How to Use")
     st.markdown("""
@@ -42,11 +43,14 @@ models = load_models()
 def predict_power(features):
     """Make predictions from all models"""
     scaled_features = models['scaler'].transform([features])
+    rf_pred = models['rf_model'].predict(scaled_features)[0]
+    xgb_pred = models['xgb_model'].predict(scaled_features)[0]
+    ensemble_pred = (models['best_weight'] * rf_pred + 
+                     (1 - models['best_weight']) * xgb_pred)
     return {
-        'rf': models['rf_model'].predict(scaled_features)[0],
-        'xgb': models['xgb_model'].predict(scaled_features)[0],
-        'ensemble': (models['best_weight'] * models['rf_model'].predict(scaled_features)[0] + 
-                     (1 - models['best_weight']) * models['xgb_model'].predict(scaled_features)[0])
+        'rf': rf_pred,
+        'xgb': xgb_pred,
+        'ensemble': ensemble_pred
     }
 
 # 4. Function to map CSV columns to required columns
@@ -135,8 +139,9 @@ with col2:
         'XGBoost': predictions['xgb'],
         'Ensemble': predictions['ensemble']
     }
+    custom_palette = ["#1f77b4", "#ff7f0e", "#2ca02c"]
     pd.Series(models_data).plot(kind='bar', ax=ax3, 
-                              color=['#1f77b4', '#ff7f0e', '#2ca02c'])
+                              color=custom_palette)
     ax3.set_ylabel("Power Output (MW)")
     plt.xticks(rotation=0)
     st.pyplot(fig3)
@@ -152,12 +157,19 @@ with col2:
 def optimize_weight(rf_preds, xgb_preds, y_true):
     best_weight = 0
     lowest_mae = float('inf')
+    optimization_history = []  # To store the weight and corresponding MAE
+
     for w in np.linspace(0, 1, 101):
         blended = w * rf_preds + (1 - w) * xgb_preds
         mae = mean_absolute_error(y_true, blended)
+        optimization_history.append((w, mae))
         if mae < lowest_mae:
             lowest_mae = mae
             best_weight = w
+
+    st.write("Optimization History (Weight vs MAE):")
+    st.write(optimization_history)
+    
     return best_weight, lowest_mae
 
 # 6. Batch Prediction with CSV Upload
