@@ -206,3 +206,4 @@ if uploaded_file is not None:
 
         csv = df_processed.to_csv(index=False).encode()
         st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
+ 
