@@ -195,3 +195,39 @@ if uploaded_file is not None:
         csv = df_processed.to_csv(index=False).encode()
         st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
 dark_mode = st.sidebar.toggle("🌙 Dark Mode", value=False)
+def set_theme(dark):
+    if dark:
+        st.markdown(
+            """
+            <style>
+            body {
+                background-color: #0e1117;
+                color: #f1f1f1;
+            }
+            .stApp {
+                background-color: #0e1117;
+            }
+            .css-1d391kg, .css-1cpxqw2 {
+                color: #f1f1f1 !important;
+            }
+            .css-1v3fvcr {
+                background-color: #262730 !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            """
+            <style>
+            body {
+                background-color: #ffffff;
+                color: #000000;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+set_theme(dark_mode)
