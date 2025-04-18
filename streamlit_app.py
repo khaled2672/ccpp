@@ -57,11 +57,11 @@ def predict_power(features):
 def map_columns(df):
     """Map user-uploaded CSV columns to the required features."""
     column_mapping = {
-        "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature"],
-        "Relative Humidity": ["Relative Humidity","Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)"],
-        "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)"],
-        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)"],
-        "Actual Power": ["Total Power", "Power Output", "Power Output", "Real Power", "Observed Power", "Measured Power"]
+        "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature","AT"],
+        "Relative Humidity": ["Relative Humidity","Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH"],
+        "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP"],
+        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "V"],
+        "Actual Power": ["Total Power", "Power Output", "Power Output", "Real Power", "Observed Power", "Measured Power", "TP", "PE"]
 
     }
 
