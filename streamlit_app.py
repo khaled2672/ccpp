@@ -189,7 +189,7 @@ if uploaded_file is not None:
         rf_preds = models['rf_model'].predict(scaled)
         xgb_preds = models['xgb_model'].predict(scaled)
 
-        if auto_optimize and ''Total power',' in df_processed.columns:
+        if auto_optimize and 'Total power' in df_processed.columns:
             y_true = df_processed['Total power'].values
             weight, best_mae = optimize_weight(rf_preds, xgb_preds, y_true)
             st.success(f"✅ Auto-optimized ensemble weight: {weight:.2f} RF / {1 - weight:.2f} XGB")
@@ -206,4 +206,3 @@ if uploaded_file is not None:
 
         csv = df_processed.to_csv(index=False).encode()
         st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
- 
