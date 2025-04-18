@@ -1,4 +1,4 @@
-import streamlit as st
+i made a Streamlit app here is the code for it import streamlit as st
 import numpy as np
 import pandas as pd
 import joblib
@@ -14,7 +14,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Sidebar Instructions
 with st.sidebar:
     st.subheader("How to Use")
     st.markdown("""
@@ -43,26 +42,21 @@ models = load_models()
 def predict_power(features):
     """Make predictions from all models"""
     scaled_features = models['scaler'].transform([features])
-    rf_pred = models['rf_model'].predict(scaled_features)[0]
-    xgb_pred = models['xgb_model'].predict(scaled_features)[0]
-    ensemble_pred = (models['best_weight'] * rf_pred + 
-                     (1 - models['best_weight']) * xgb_pred)
     return {
-        'rf': rf_pred,
-        'xgb': xgb_pred,
-        'ensemble': ensemble_pred
+        'rf': models['rf_model'].predict(scaled_features)[0],
+        'xgb': models['xgb_model'].predict(scaled_features)[0],
+        'ensemble': (models['best_weight'] * models['rf_model'].predict(scaled_features)[0] + 
+                     (1 - models['best_weight']) * models['xgb_model'].predict(scaled_features)[0])
     }
 
 # 4. Function to map CSV columns to required columns
 def map_columns(df):
     """Map user-uploaded CSV columns to the required features."""
     column_mapping = {
-        "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature","AT"],
-        "Relative Humidity": ["Relative Humidity","Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH"],
-        "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP"],
-        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "V"],
-        "Actual Power": ["Total Power", "Power Output", "Power Output", "Real Power", "Observed Power", "Measured Power", "TP", "PE"]
-
+        "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature"],
+        "Relative Humidity": ["Relative Humidity","Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)"],
+        "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)"],
+        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)"]
     }
 
     mapped_columns = {}
@@ -141,9 +135,8 @@ with col2:
         'XGBoost': predictions['xgb'],
         'Ensemble': predictions['ensemble']
     }
-    custom_palette = ["#1f77b4", "#ff7f0e", "#2ca02c"]
     pd.Series(models_data).plot(kind='bar', ax=ax3, 
-                              color=custom_palette)
+                              color=['#1f77b4', '#ff7f0e', '#2ca02c'])
     ax3.set_ylabel("Power Output (MW)")
     plt.xticks(rotation=0)
     st.pyplot(fig3)
@@ -159,19 +152,12 @@ with col2:
 def optimize_weight(rf_preds, xgb_preds, y_true):
     best_weight = 0
     lowest_mae = float('inf')
-    optimization_history = []  # To store the weight and corresponding MAE
-
     for w in np.linspace(0, 1, 101):
         blended = w * rf_preds + (1 - w) * xgb_preds
         mae = mean_absolute_error(y_true, blended)
-        optimization_history.append((w, mae))
         if mae < lowest_mae:
             lowest_mae = mae
             best_weight = w
-
-    st.write("Optimization History (Weight vs MAE):")
-    st.write(optimization_history)
-    
     return best_weight, lowest_mae
 
 # 6. Batch Prediction with CSV Upload
@@ -207,4 +193,4 @@ if uploaded_file is not None:
         st.write("⚡ Predictions", df_processed)
 
         csv = df_processed.to_csv(index=False).encode()
-        st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv') ⚠️ 'Actual Power' column not found. Optimization skipped.
+        st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
