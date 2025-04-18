@@ -60,8 +60,7 @@ def map_columns(df):
         "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature"],
         "Relative Humidity": ["Relative Humidity","Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)"],
         "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)"],
-        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)"],
-        "Actual Power": ["Actual Power", "Power Output", "Real Power", "Observed Power", "Measured Power"]
+        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)"]
     }
 
     mapped_columns = {}
@@ -71,7 +70,7 @@ def map_columns(df):
                 mapped_columns[target] = name
                 break
 
-    if len(mapped_columns) < 5:
+    if len(mapped_columns) < 4:
         missing_cols = [col for col in column_mapping.keys() if col not in mapped_columns]
         st.error(f"Missing columns: {', '.join(missing_cols)}. Please upload a file with the required columns.")
         return None
