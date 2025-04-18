@@ -61,7 +61,7 @@ def map_columns(df):
         "Relative Humidity": ["Relative Humidity","Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)"],
         "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)"],
         "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)"],
-        "Actual Power": ["Actual Power", "Power Output", "Real Power", "Observed Power", "Measured Power"]
+        "Actual Power": ["Total Power", "Power Output", "Power Output", "Real Power", "Observed Power", "Measured Power"]
 
     }
 
