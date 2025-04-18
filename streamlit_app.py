@@ -190,7 +190,7 @@ if uploaded_file is not None:
         xgb_preds = models['xgb_model'].predict(scaled)
 
         if auto_optimize and 'Actual Power' in df_processed.columns:
-            y_true = df_processed['Actual Power','Total power'].values
+            y_true = df_processed['Total power'].values
             weight, best_mae = optimize_weight(rf_preds, xgb_preds, y_true)
             st.success(f"✅ Auto-optimized ensemble weight: {weight:.2f} RF / {1 - weight:.2f} XGB")
             st.write(f"📉 Best MAE: {best_mae:.2f} MW")
