@@ -30,8 +30,8 @@ def load_models():
             'rf_model': joblib.load('random_forest_model.joblib'),
             'xgb_model': joblib.load('xgboost_model.joblib'),
             'scaler': joblib.load('scaler.joblib'),
-            'best_weight': np.load('best_weight.npy').item()
-            'target': joblib.load('target_scaler.joblib'),
+            'best_weight': np.load('best_weight.npy').item(),
+            'target': joblib.load('target_scaler.joblib')
 
         }
     except FileNotFoundError as e:
