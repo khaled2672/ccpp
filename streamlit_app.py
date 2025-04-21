@@ -31,6 +31,8 @@ def load_models():
             'xgb_model': joblib.load('xgboost_model.joblib'),
             'scaler': joblib.load('scaler.joblib'),
             'best_weight': np.load('best_weight.npy').item()
+            'target': joblib.load('target_scaler.joblib'),
+
         }
     except FileNotFoundError as e:
         st.error(f"Model loading failed: {str(e)}")
