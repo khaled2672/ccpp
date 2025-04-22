@@ -11,10 +11,10 @@ scaler = joblib.load('scaler.joblib')
 
 # Feature bounds for UI
 feature_bounds = {
-    'Ambient Temperature': [20.0, 30.0],
-    'Ambient Relative Humidity': [40.0, 70.0],
-    'Ambient Pressure': [999.0, 1035.0],
-    'Exhaust Vacuum': [3.5, 8.0],
+    'Ambient Temperature': [0.0, 50.0],
+    'Ambient Relative Humidity': [10.0, 100.0],
+    'Ambient Pressure': [799.0, 1035.0],
+    'Exhaust Vacuum': [3.0, 12.0],
     'Weight': [0.0, 1.0]
 }
 
