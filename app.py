@@ -61,6 +61,31 @@ xgb_importance = pd.Series(xgb_model.feature_importances_, index=feature_names)
 rf_importance.plot(kind='barh', ax=ax1, title='Random Forest')
 xgb_importance.plot(kind='barh', ax=ax2, title='XGBoost', color='salmon')
 st.pyplot(fig)
+# 4. Function to map CSV columns to required columns
+def map_columns(df):
+    """Map user-uploaded CSV columns to the required features."""
+    column_mapping = {
+        "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature"],
+        "Relative Humidity": ["Relative Humidity","Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)"],
+        "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)"],
+        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)"]
+    }
+
+    mapped_columns = {}
+    for target, possible_names in column_mapping.items():
+        for name in possible_names:
+            if name in df.columns:
+                mapped_columns[target] = name
+                break
+
+    if len(mapped_columns) < 4:
+        missing_cols = [col for col in column_mapping.keys() if col not in mapped_columns]
+        st.error(f"Missing columns: {', '.join(missing_cols)}. Please upload a file with the required columns.")
+        return None
+
+    df = df.rename(columns=mapped_columns)
+    return df
+
 
 st.markdown("---")
 st.caption("Developed using Streamlit and optimized with Particle Swarm Optimization (PSO)")
