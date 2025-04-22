@@ -85,9 +85,5 @@ def map_columns(df):
 
     df = df.rename(columns=mapped_columns)
     return df
-    # Get predictions
-current_features = [ambient_temp, humidity, pressure, exhaust_vacuum]
-predictions = predict_power(current_features)
-
     
  
