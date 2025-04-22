@@ -102,7 +102,6 @@ if uploaded_file is not None:
         st.write("✅ Dataset Columns Mapped Successfully")
 
         features = df_processed[["Ambient Temperature", "Ambient Relative Humidity", "Ambient Pressure", "Exhaust Vacuum"]]
-        scaled = models['scaler'].transform(features)
         rf_preds = models['rf_model'].predict(scaled)
         xgb_preds = models['xgb_model'].predict(scaled)
 
