@@ -85,38 +85,9 @@ def map_columns(df):
 
     df = df.rename(columns=mapped_columns)
     return df
+    # Get predictions
+current_features = [ambient_temp, humidity, pressure, exhaust_vacuum]
+predictions = predict_power(current_features)
 
-
-st.markdown("---")
-st.caption("Developed using Streamlit and optimized with Particle Swarm Optimization (PSO)")
-# 6. Batch Prediction with CSV Upload
-st.subheader("📂 Upload CSV for Batch Prediction")
-uploaded_file = st.file_uploader("Upload input data (CSV format)", type=["csv"])
-
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    st.write("📊 Uploaded Data", df.head())
-
-    df_processed = map_columns(df)
-    if df_processed is not None:
-        st.write("✅ Dataset Columns Mapped Successfully")
-
-        
-        if auto_optimize and 'Actual Power' in df_processed.columns:
-            y_true = df_processed['Actual Power'].values
-            weight, best_mae = optimize_weight(rf_preds, xgb_preds, y_true)
-            st.success(f"✅ Auto-optimized ensemble weight: {weight:.2f} RF / {1 - weight:.2f} XGB")
-            st.write(f"📉 Best MAE: {best_mae:.2f} MW")
-        else:
-            weight = models['best_weight']
-            if auto_optimize:
-                st.warning("⚠️ 'Actual Power' column not found. Optimization skipped.")
-
-        final_preds = weight * rf_preds + (1 - weight) * xgb_preds
-        df_processed['Predicted Power (MW)'] = final_preds
-
-        st.write("⚡ Predictions", df_processed)
-
-        csv = df_processed.to_csv(index=False).encode()
-        st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
+    
  
