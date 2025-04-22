@@ -102,8 +102,8 @@ if uploaded_file is not None:
         st.write("✅ Dataset Columns Mapped Successfully")
 
         features = df_processed[["Ambient Temperature", "Ambient Relative Humidity", "Ambient Pressure", "Exhaust Vacuum"]]
-        rf_preds = models['rf_model'].predict(scaled)
-        xgb_preds = models['xgb_model'].predict(scaled)
+        rf_preds = models['rf_model'].predict
+        xgb_preds = models['xgb_model'].predict
 
         if auto_optimize and 'Actual Power' in df_processed.columns:
             y_true = df_processed['Actual Power'].values
