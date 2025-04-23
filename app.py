@@ -52,8 +52,12 @@ st.subheader("🔢 Single Prediction")
 st.write(f"**Random Forest Prediction:** {rf_pred:.2f} MW")
 st.write(f"**XGBoost Prediction:** {xgb_pred:.2f} MW")
 st.write(f"**Ensemble Prediction (Weight {input_weight:.2f}):** {ensemble_pred:.2f} MW")
-
-
+# ========== Feature Importance ==========
+st.subheader("📈 Feature Importance")
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+pd.Series(rf_model.feature_importances_, index=feature_names).plot(kind='barh', ax=ax1, title='Random Forest', color='skyblue')
+pd.Series(xgb_model.feature_importances_, index=feature_names).plot(kind='barh', ax=ax2, title='XGBoost', color='salmon')
+st.pyplot(fig)
 # ========== Column Mapping for CSV Upload ==========
 def map_columns(df):
     column_mapping = {
