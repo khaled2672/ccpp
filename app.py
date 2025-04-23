@@ -108,7 +108,7 @@ if uploaded_file:
         st.write("⚡ Predictions", df_mapped)
 
         csv = df_mapped.to_csv(index=False).encode()
-        st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv')
+        st.download_button("⬇️ Download Results as CSV", data=csv, file_name="predicted_power.csv", mime='text/csv') 
         dark_mode = st.sidebar.toggle("🌙 Dark Mode", value=False)
 def set_theme(dark):
     if dark:
