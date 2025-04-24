@@ -112,51 +112,23 @@ with st.sidebar:
         rf_model, xgb_model, scaler = load_models()
 
     # Feature bounds for UI
-    # Feature bounds and additional info for UI
-feature_bounds = {
-    'Ambient Temperature': [0.0, 50.0],
-    'Ambient Relative Humidity': [10.0, 100.0],
-    'Ambient Pressure': [799.0, 1035.0],
-    'Exhaust Vacuum': [3.0, 12.0],
-    'Model Weight (RF vs XGB)': [0.0, 1.0]
-}
-
-feature_info = {
-    'Ambient Temperature': {
-        'unit': '°C',
-        'help': 'Ambient air temperature in Celsius (°C). Affects thermal efficiency.'
-    },
-    'Ambient Relative Humidity': {
-        'unit': '%',
-        'help': 'Humidity of ambient air in percentage. Affects combustion and cooling.'
-    },
-    'Ambient Pressure': {
-        'unit': 'mbar',
-        'help': 'Atmospheric pressure in millibar (mbar). Influences air density.'
-    },
-    'Exhaust Vacuum': {
-        'unit': 'cmHg',
-        'help': 'Exhaust vacuum in cm of mercury. Related to turbine backpressure.'
-    },
-    'Model Weight (RF vs XGB)': {
-        'unit': '',
-        'help': 'Blend factor between Random Forest (1.0) and XGBoost (0.0) predictions.'
+    feature_bounds = {
+        'Ambient Temperature': [0.0, 50.0],
+        'Ambient Relative Humidity': [10.0, 100.0],
+        'Ambient Pressure': [799.0, 1035.0],
+        'Exhaust Vacuum': [3.0, 12.0],
+        'Model Weight (RF vs XGB)': [0.0, 1.0]
     }
-}
 
-# Input sliders
-st.subheader("Input Parameters")
-inputs = {}
-for feature, (low, high) in feature_bounds.items():
-    default = (low + high) / 2
-    unit = feature_info[feature]['unit']
-    help_text = feature_info[feature]['help']
-    label = f"{feature} ({unit})" if unit else feature
-    inputs[feature] = st.slider(
-        label,
-        low, high, default,
-        help=help_text
-    )
+    # Input sliders
+    st.subheader("Input Parameters")
+    inputs = {}
+    for feature, (low, high) in feature_bounds.items():
+        default = (low + high) / 2
+        inputs[feature] = st.slider(
+            feature, low, high, default,
+            help=f"Adjust {feature} between {low} and {high}"
+        )
 
     # Reset button
     if st.button("🔄 Reset to Defaults"):
