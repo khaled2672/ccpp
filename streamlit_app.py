@@ -113,10 +113,10 @@ with st.sidebar:
 
     # Feature bounds for UI
     feature_bounds = {
-        'Ambient Temperature': [0.0, 50.0],
-        'Ambient Relative Humidity': [10.0, 100.0],
-        'Ambient Pressure': [799.0, 1035.0],
-        'Exhaust Vacuum': [3.0, 12.0],
+        'Ambient Temperature (c)': [0.0, 50.0],
+        'Ambient Relative Humidity(%)': [10.0, 100.0],
+        'Ambient Pressure (mbar)': [799.0, 1035.0],
+        'Exhaust Vacuum (cmHg)': [3.0, 12.0],
         'Model Weight (RF vs XGB)': [0.0, 1.0]
     }
 
