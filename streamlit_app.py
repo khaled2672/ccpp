@@ -61,10 +61,10 @@ def load_models():
 def map_columns(df):
     """Flexibly map user-uploaded CSV columns to required features with units"""
     column_mapping = {
-        "Ambient Temperature": ["temperature", "temp", "at", "ambient_temp", "ambient temperature", "t", "atmospheric temperature"],
-        "Ambient Relative Humidity": ["humidity", "rh", "relative_humidity", "ambient humidity", "humidity (%)", "h", "relative humidity"],
-        "Ambient Pressure": ["pressure", "ap", "ambient_pressure", "amb pressure", "pressure (mbar)", "p", "atmospheric pressure"],
-        "Exhaust Vacuum": ["vacuum", "ev", "exhaust_vac", "exhaust_vacuum", "vacuum (cmhg)", "v", "exhaust pressure"]
+        "Ambient Temperature": ["temperature", "temp", "at", "ambient_temp", "ambient temperature", "t", "atmospheric temperature", "Ambient Temperature"],
+        "Ambient Relative Humidity": ["humidity", "rh", "relative_humidity", "ambient humidity", "humidity (%)", "h", "relative humidity", "Ambient Relative Humidity"],
+        "Ambient Pressure": ["pressure", "ap", "ambient_pressure", "amb pressure", "pressure (mbar)", "p", "atmospheric pressure","Ambient Pressure"],
+        "Exhaust Vacuum": ["vacuum", "ev", "exhaust_vac", "exhaust_vacuum", "vacuum (cmhg)", "v", "exhaust pressure","Exhaust Vacuum"]
     }
 
     mapped_columns = {}
