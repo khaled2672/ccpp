@@ -119,28 +119,6 @@ with st.sidebar:
         'Exhaust Vacuum': [3.0, 12.0],
         'Model Weight (RF vs XGB)': [0.0, 1.0]
     }
-    feature_info = {
-    'Ambient Temperature': {
-        'unit': '°C',
-        'help': 'Ambient air temperature in Celsius (°C). Affects thermal efficiency.'
-    },
-    'Ambient Relative Humidity': {
-        'unit': '%',
-        'help': 'Humidity of ambient air in percentage. Affects combustion and cooling.'
-    },
-    'Ambient Pressure': {
-        'unit': 'mbar',
-        'help': 'Atmospheric pressure in millibar (mbar). Influences air density.'
-    },
-    'Exhaust Vacuum': {
-        'unit': 'cmHg',
-        'help': 'Exhaust vacuum in cm of mercury. Related to turbine backpressure.'
-    },
-    'Model Weight (RF vs XGB)': {
-        'unit': '',
-        'help': 'Blend factor between Random Forest (1.0) and XGBoost (0.0) predictions.'
-    }
-}
 
     # Input sliders
     st.subheader("Input Parameters")
@@ -295,4 +273,3 @@ st.caption("""
 Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
 Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
 """.format(input_weight*100, (1-input_weight)*100))
- 
