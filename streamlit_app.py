@@ -295,3 +295,4 @@ st.caption("""
 Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
 Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
 """.format(input_weight*100, (1-input_weight)*100))
+ 
