@@ -60,10 +60,10 @@ def load_models():
 def map_columns(df):
     """Map user-uploaded CSV columns to the required features."""
     column_mapping = {
-        "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature", "AT"],
-        "Ambient Relative Humidity": ["Relative Humidity", "Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH"],
-        "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP"],
-        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "EV"]
+        "Ambient Temperature (°C)": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature", "AT"],
+        "Ambient Relative Humidity (%)": ["Relative Humidity", "Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH"],
+        "Ambient Pressure (mbar)": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP"],
+        "Exhaust Vacuum (cmHg)": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "EV"]
     }
 
     mapped_columns = {}
@@ -111,12 +111,12 @@ with st.sidebar:
     with st.spinner("Loading models..."):
         rf_model, xgb_model, scaler = load_models()
 
-    # Feature bounds for UI
+    # Feature bounds for UI (with units in display names)
     feature_bounds = {
-        'Ambient Temperature': [0.0, 50.0],
-        'Ambient Relative Humidity': [10.0, 100.0],
-        'Ambient Pressure': [799.0, 1035.0],
-        'Exhaust Vacuum': [3.0, 12.0],
+        'Ambient Temperature (°C)': [0.0, 50.0],
+        'Ambient Relative Humidity (%)': [10.0, 100.0],
+        'Ambient Pressure (mbar)': [799.0, 1035.0],
+        'Exhaust Vacuum (cmHg)': [3.0, 12.0],
         'Model Weight (RF vs XGB)': [0.0, 1.0]
     }
 
@@ -173,10 +173,28 @@ with col3:
 st.subheader("📈 Feature Importance")
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 try:
-    rf_importance = pd.Series(rf_model.feature_importances_, index=feature_names)
-    xgb_importance = pd.Series(xgb_model.feature_importances_, index=feature_names)
+    # Feature names with units for display
+    display_feature_names = [
+        "Ambient Temperature (°C)",
+        "Ambient Relative Humidity (%)",
+        "Ambient Pressure (mbar)",
+        "Exhaust Vacuum (cmHg)"
+    ]
+    
+    rf_importance = pd.Series(rf_model.feature_importances_, index=display_feature_names)
+    xgb_importance = pd.Series(xgb_model.feature_importances_, index=display_feature_names)
+    
     rf_importance.plot(kind='barh', ax=ax1, title='Random Forest', color='#1f77b4')
     xgb_importance.plot(kind='barh', ax=ax2, title='XGBoost', color='#ff7f0e')
+    
+    # Add value labels to bars
+    for ax in [ax1, ax2]:
+        for p in ax.patches:
+            width = p.get_width()
+            ax.annotate(f'{width:.2f}', 
+                        (width * 1.02, p.get_y() + p.get_height()/2.),
+                        ha='left', va='center')
+    
     fig.tight_layout()
     st.pyplot(fig)
 except Exception as e:
@@ -216,12 +234,12 @@ if uploaded_file is not None:
         # Column mapping
         mapped_columns = map_columns(df)
         if len(mapped_columns) < 4:
-            missing_cols = [col for col in feature_names if col not in mapped_columns]
+            missing_cols = [col.split(')')[0] + ')' for col in feature_names if col not in mapped_columns]
             st.error(f"Could not find columns for: {', '.join(missing_cols)}")
             st.stop()
             
         df_processed = df.rename(columns=mapped_columns)
-        required_cols = feature_names  # From feature_bounds
+        required_cols = [col.split(')')[0] + ')' for col in feature_names]  # Get base names without units
         
         # Check for missing columns after mapping
         missing_cols = [col for col in required_cols if col not in df_processed.columns]
