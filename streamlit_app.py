@@ -5,8 +5,9 @@ import joblib
 import matplotlib.pyplot as plt
 from io import StringIO
 
-# Theme configuration
+# ========== THEME CONFIGURATION ==========
 def set_theme(dark):
+    """Configure light/dark theme with plot styling"""
     plt.style.use('dark_background' if dark else 'default')
     if dark:
         st.markdown(
@@ -42,7 +43,7 @@ def set_theme(dark):
             unsafe_allow_html=True
         )
 
-# Cache resources for better performance
+# ========== MODEL LOADING ==========
 @st.cache_resource
 def load_models():
     """Load models and scaler with caching"""
@@ -56,38 +57,46 @@ def load_models():
         st.error(f"Error loading models: {str(e)}")
         st.stop()
 
-# Column mapping function
+# ========== COLUMN MAPPING ==========
 def map_columns(df):
-    """Map user-uploaded CSV columns to the required features."""
+    """Flexibly map user-uploaded CSV columns to required features with units"""
     column_mapping = {
-        "Ambient Temperature (°C)": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature", "AT"],
-        "Ambient Relative Humidity (%)": ["Relative Humidity", "Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH"],
-        "Ambient Pressure (mbar)": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP"],
-        "Exhaust Vacuum (cmHg)": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "EV"]
+        "Ambient Temperature (°C)": ["temperature", "temp", "at", "ambient_temp", "ambient temperature", "t", "atmospheric temperature"],
+        "Ambient Relative Humidity (%)": ["humidity", "rh", "relative_humidity", "ambient humidity", "humidity (%)", "h", "relative humidity"],
+        "Ambient Pressure (mbar)": ["pressure", "ap", "ambient_pressure", "amb pressure", "pressure (mbar)", "p", "atmospheric pressure"],
+        "Exhaust Vacuum (cmHg)": ["vacuum", "ev", "exhaust_vac", "exhaust_vacuum", "vacuum (cmhg)", "v", "exhaust pressure"]
     }
 
     mapped_columns = {}
-    for target, possible_names in column_mapping.items():
+    df_columns_lower = [col.lower().strip() for col in df.columns]
+    
+    for display_name, possible_names in column_mapping.items():
+        found = False
         for name in possible_names:
-            if name in df.columns:
-                mapped_columns[target] = name
+            if name in df_columns_lower:
+                original_col = df.columns[df_columns_lower.index(name)]
+                mapped_columns[display_name] = original_col
+                found = True
                 break
-
+        
+        if not found:
+            st.warning(f"⚠️ Could not find column matching: {display_name}")
+    
     return mapped_columns
 
-# Generate example CSV data
+# ========== EXAMPLE CSV GENERATION ==========
 @st.cache_data
 def generate_example_csv():
     """Generate example CSV data for download"""
     example_data = {
         "Temperature": [25.0, 30.0, 27.5],
         "Humidity (%)": [60.0, 65.0, 62.5],
-        "Pressure (mbar)": [1010.0, 1005.0, 1007.5],
-        "Vacuum (cmHg)": [5.0, 6.0, 5.5]
+        "Pressure": [1010.0, 1005.0, 1007.5],
+        "Vacuum": [5.0, 6.0, 5.5]
     }
     return pd.DataFrame(example_data).to_csv(index=False)
 
-# Initialize session state for theme persistence
+# ========== INITIALIZATION ==========
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
@@ -95,23 +104,24 @@ if 'dark_mode' not in st.session_state:
 with st.sidebar:
     st.title("⚙️ CCPP Power Predictor")
     
-    # Dark mode toggle
+    # Theme toggle
     st.session_state.dark_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
     set_theme(st.session_state.dark_mode)
     
+    # Instructions
     st.subheader("How to Use")
     st.markdown("""
     1. Adjust sliders to set plant conditions  
-    2. View the predicted power output  
-    3. Compare models using the toggle  
+    2. View predicted power output  
+    3. Compare model performance  
     4. Upload CSV for batch predictions
     """)
     
-    # Load models
+    # Model loading
     with st.spinner("Loading models..."):
         rf_model, xgb_model, scaler = load_models()
 
-    # Feature bounds for UI (with units in display names)
+    # Input parameters with units
     feature_bounds = {
         'Ambient Temperature (°C)': [0.0, 50.0],
         'Ambient Relative Humidity (%)': [10.0, 100.0],
@@ -120,32 +130,29 @@ with st.sidebar:
         'Model Weight (RF vs XGB)': [0.0, 1.0]
     }
 
-    # Input sliders
     st.subheader("Input Parameters")
     inputs = {}
     for feature, (low, high) in feature_bounds.items():
         default = (low + high) / 2
         inputs[feature] = st.slider(
             feature, low, high, default,
-            help=f"Adjust {feature} between {low} and {high}"
+            help=f"Recommended range: {low} to {high}"
         )
 
-    # Reset button
     if st.button("🔄 Reset to Defaults"):
         for feature in inputs:
             inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
-# ========== MAIN CONTENT ==========
+# ========== MAIN INTERFACE ==========
 st.title("🔋 Combined Cycle Power Plant Predictor")
-st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
+st.markdown("Predict net hourly electrical energy output using ambient conditions")
 
-# Prepare input for prediction
+# Single prediction
 feature_names = list(feature_bounds.keys())[:-1]  # Exclude weight
 input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
 input_weight = inputs['Model Weight (RF vs XGB)']
 
-# Make predictions
-with st.spinner("Making predictions..."):
+with st.spinner("Calculating predictions..."):
     try:
         scaled_features = scaler.transform(input_features)
         rf_pred = rf_model.predict(scaled_features)[0]
@@ -155,7 +162,7 @@ with st.spinner("Making predictions..."):
         st.error(f"Prediction error: {str(e)}")
         st.stop()
 
-# Display results
+# Prediction results
 st.subheader("🔢 Model Predictions")
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -169,125 +176,156 @@ with col3:
         delta=f"{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg"
     )
 
-# Visualization
+# Feature importance visualization
 st.subheader("📈 Feature Importance")
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 try:
-    # Feature names with units for display
-    display_feature_names = [
+    display_names = [
         "Ambient Temperature (°C)",
         "Ambient Relative Humidity (%)",
         "Ambient Pressure (mbar)",
         "Exhaust Vacuum (cmHg)"
     ]
     
-    rf_importance = pd.Series(rf_model.feature_importances_, index=display_feature_names)
-    xgb_importance = pd.Series(xgb_model.feature_importances_, index=display_feature_names)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     
+    # Random Forest importance
+    rf_importance = pd.Series(rf_model.feature_importances_, index=display_names)
     rf_importance.plot(kind='barh', ax=ax1, title='Random Forest', color='#1f77b4')
-    xgb_importance.plot(kind='barh', ax=ax2, title='XGBoost', color='#ff7f0e')
+    ax1.set_xlabel("Importance Score")
     
-    # Add value labels to bars
+    # XGBoost importance
+    xgb_importance = pd.Series(xgb_model.feature_importances_, index=display_names)
+    xgb_importance.plot(kind='barh', ax=ax2, title='XGBoost', color='#ff7f0e')
+    ax2.set_xlabel("Importance Score")
+    
+    # Add value labels
     for ax in [ax1, ax2]:
         for p in ax.patches:
             width = p.get_width()
             ax.annotate(f'{width:.2f}', 
-                        (width * 1.02, p.get_y() + p.get_height()/2.),
-                        ha='left', va='center')
+                       (width * 1.02, p.get_y() + p.get_height()/2.),
+                       ha='left', va='center')
     
     fig.tight_layout()
     st.pyplot(fig)
 except Exception as e:
     st.warning(f"Could not generate feature importance plots: {str(e)}")
 
-# Batch Prediction with CSV Upload
+# ========== BATCH PREDICTION ==========
 st.subheader("📂 Batch Prediction")
-st.markdown("Upload a CSV file with multiple records to get predictions for all of them at once.")
+st.markdown("Upload a CSV file containing multiple records for prediction")
 
 # Example CSV download
-st.download_button(
-    "⬇️ Download Example CSV",
-    data=generate_example_csv(),
-    file_name="ccpp_example_input.csv",
-    mime="text/csv",
-    help="Example file with the expected format"
-)
+with st.expander("🛠️ CSV Format Requirements"):
+    st.markdown("""
+    **Required columns (case insensitive):**
+    - Temperature (e.g., 'temp', 'ambient_temp', 'AT')
+    - Humidity (e.g., 'humidity', 'RH', 'relative_humidity')
+    - Pressure (e.g., 'pressure', 'AP', 'ambient_pressure')
+    - Vacuum (e.g., 'vacuum', 'EV', 'exhaust_vacuum')
+    
+    **Example CSV:**
+    """)
+    st.download_button(
+        "⬇️ Download Example CSV",
+        data=generate_example_csv(),
+        file_name="ccpp_example_input.csv",
+        mime="text/csv"
+    )
 
 uploaded_file = st.file_uploader(
-    "Upload your input data (CSV format)", 
+    "Drag & drop your CSV file here",
     type=["csv"],
-    help="CSV should contain columns for temperature, humidity, pressure, and vacuum"
+    help="CSV should contain columns for temperature, humidity, pressure and vacuum"
 )
 
 if uploaded_file is not None:
     try:
         df = pd.read_csv(uploaded_file)
         if df.empty:
-            st.error("Uploaded file is empty")
+            st.error("❌ Uploaded file is empty")
             st.stop()
             
-        st.success("File uploaded successfully!")
+        st.success("✅ File uploaded successfully")
         
-        with st.expander("View uploaded data"):
+        with st.expander("👀 View uploaded data"):
             st.dataframe(df.head())
         
         # Column mapping
         mapped_columns = map_columns(df)
-        if len(mapped_columns) < 4:
-            missing_cols = [col.split(')')[0] + ')' for col in feature_names if col not in mapped_columns]
-            st.error(f"Could not find columns for: {', '.join(missing_cols)}")
-            st.stop()
-            
-        df_processed = df.rename(columns=mapped_columns)
-        required_cols = [col.split(')')[0] + ')' for col in feature_names]  # Get base names without units
         
-        # Check for missing columns after mapping
-        missing_cols = [col for col in required_cols if col not in df_processed.columns]
+        # Check required columns
+        required_columns = [
+            "Ambient Temperature (°C)",
+            "Ambient Relative Humidity (%)",
+            "Ambient Pressure (mbar)",
+            "Exhaust Vacuum (cmHg)"
+        ]
+        
+        missing_cols = [col for col in required_columns if col not in mapped_columns]
         if missing_cols:
-            st.error(f"Missing columns after mapping: {', '.join(missing_cols)}")
+            st.error("❌ Missing required columns in uploaded file")
+            st.markdown("**Could not find these required columns:**")
+            for col in missing_cols:
+                st.markdown(f"- {col}")
+            
+            st.markdown("**Please check your CSV includes columns with these names or similar:**")
+            st.code("""
+            Temperature (e.g., temp, AT, ambient_temp)\n
+            Humidity (e.g., humidity, RH, relative_humidity)\n
+            Pressure (e.g., pressure, AP, ambient_pressure)\n
+            Vacuum (e.g., vacuum, EV, exhaust_vacuum)
+            """)
             st.stop()
             
         # Process data
-        with st.spinner("Processing data..."):
-            features = df_processed[required_cols]
+        with st.spinner("⚙️ Processing data..."):
             try:
+                # Rename columns to standard names
+                df_processed = df.rename(columns=mapped_columns)
+                
+                # Prepare features
+                features = df_processed[required_columns]
                 scaled = scaler.transform(features)
+                
+                # Make predictions
                 rf_preds = rf_model.predict(scaled)
                 xgb_preds = xgb_model.predict(scaled)
                 final_preds = input_weight * rf_preds + (1 - input_weight) * xgb_preds
                 
+                # Prepare results
                 results = df_processed.copy()
                 results['RF_Prediction (MW)'] = rf_preds
                 results['XGB_Prediction (MW)'] = xgb_preds
                 results['Ensemble_Prediction (MW)'] = final_preds
                 
-                st.success("Predictions completed!")
+                st.success(f"✅ Successfully processed {len(results)} records")
                 
-                # Display results
+                # Show results
                 st.dataframe(results.style.format({
                     'RF_Prediction (MW)': '{:.2f}',
                     'XGB_Prediction (MW)': '{:.2f}',
                     'Ensemble_Prediction (MW)': '{:.2f}'
                 }))
                 
-                # Download results
+                # Download button
                 csv = results.to_csv(index=False).encode()
                 st.download_button(
-                    "⬇️ Download Full Results",
+                    "⬇️ Download Predictions",
                     data=csv,
                     file_name="ccpp_predictions.csv",
-                    mime="text/csv"
+                    mime="text/csv",
+                    help="Download all predictions as CSV"
                 )
                 
             except Exception as e:
-                st.error(f"Error during prediction: {str(e)}")
+                st.error(f"❌ Processing error: {str(e)}")
                 
     except Exception as e:
-        st.error(f"Error processing file: {str(e)}")
+        st.error(f"❌ File loading error: {str(e)}")
 
 # Footer
 st.markdown("---")
 st.caption("""
-Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
-Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
+Developed with Streamlit | Model weights: RF {:.0f}% / XGB {:.0f}%
 """.format(input_weight*100, (1-input_weight)*100))
