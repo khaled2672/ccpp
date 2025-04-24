@@ -80,7 +80,7 @@ def map_columns(df):
 def generate_example_csv():
     """Generate example CSV data for download"""
     example_data = {
-        "Temperature": [25.0, 30.0, 27.5],
+        "Temperature (°C)": [25.0, 30.0, 27.5],
         "Humidity (%)": [60.0, 65.0, 62.5],
         "Pressure (mbar)": [1010.0, 1005.0, 1007.5],
         "Vacuum (cmHg)": [5.0, 6.0, 5.5]
