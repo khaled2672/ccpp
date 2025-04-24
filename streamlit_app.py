@@ -151,4 +151,3 @@ def set_theme(dark):
         )
 
 set_theme(dark_mode)
-plt.style.use('dark_background' if dark_mode else 'default')
