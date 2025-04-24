@@ -3,7 +3,13 @@ import numpy as np
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
-
+with st.sidebar:
+    st.subheader("How to Use")
+    st.markdown("""
+    1. Adjust sliders to set plant conditions  
+    2. View the predicted power output  
+    3. Compare models using the toggle  
+    """)
 # Load models and scaler
 rf_model = joblib.load('rf_model.joblib')
 xgb_model = joblib.load('xgb_model.joblib')
