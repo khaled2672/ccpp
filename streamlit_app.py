@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
+plt.style.use('dark_background' if dark_mode else 'default')
 with st.sidebar:
     st.subheader("How to Use")
     st.markdown("""
