@@ -45,16 +45,41 @@ def set_theme(dark):
 # Cache resources for better performance
 @st.cache_resource
 def load_models():
-    """Load models and scaler with caching"""
+    """Load models, scaler and validation data with caching"""
     try:
-        return (
+        models = (
             joblib.load('rf_model.joblib'),
             joblib.load('xgb_model.joblib'),
-            joblib.load('scaler.joblib')
+            joblib.load('scaler.joblib'),
+            joblib.load('validation_data.joblib')  # Contains X_val, y_val
         )
+        return models
     except Exception as e:
         st.error(f"Error loading models: {str(e)}")
         st.stop()
+
+def find_optimal_weight(rf_model, xgb_model, scaler, X_val, y_val):
+    """Find the optimal weight between RF and XGB models using validation data"""
+    # Scale validation features
+    X_val_scaled = scaler.transform(X_val)
+    
+    # Get predictions from both models
+    rf_preds = rf_model.predict(X_val_scaled)
+    xgb_preds = xgb_model.predict(X_val_scaled)
+    
+    # Try different weights and find the one with best performance
+    best_weight = 0.5  # default
+    best_error = float('inf')
+    
+    for weight in np.linspace(0, 1, 101):  # Try 100 weights between 0 and 1
+        ensemble_preds = weight * rf_preds + (1 - weight) * xgb_preds
+        error = np.mean((ensemble_preds - y_val) ** 2)  # MSE
+        
+        if error < best_error:
+            best_error = error
+            best_weight = weight
+    
+    return best_weight
 
 # Column mapping function
 def map_columns(df):
@@ -107,17 +132,17 @@ with st.sidebar:
     4. Upload CSV for batch predictions
     """)
     
-    # Load models
+    # Load models and validation data
     with st.spinner("Loading models..."):
-        rf_model, xgb_model, scaler = load_models()
+        rf_model, xgb_model, scaler, val_data = load_models()
+        X_val, y_val = val_data['X'], val_data['y']
 
     # Feature bounds for UI
     feature_bounds = {
         'Ambient Temperature': [0.0, 50.0],
         'Ambient Relative Humidity': [10.0, 100.0],
         'Ambient Pressure': [799.0, 1035.0],
-        'Exhaust Vacuum': [3.0, 12.0],
-        'Model Weight (RF vs XGB)': [0.0, 1.0]
+        'Exhaust Vacuum': [3.0, 12.0]
     }
 
     # Input sliders
@@ -130,19 +155,37 @@ with st.sidebar:
             help=f"Adjust {feature} between {low} and {high}"
         )
 
+    # Model weight selection
+    st.subheader("Model Selection")
+    auto_weight = st.checkbox("Auto-optimize ensemble weight", value=True, 
+                            help="Automatically find the best weight based on validation data")
+    
+    if auto_weight:
+        with st.spinner("Finding optimal weight..."):
+            optimal_weight = find_optimal_weight(rf_model, xgb_model, scaler, X_val, y_val)
+            inputs['Model Weight'] = optimal_weight
+            st.info(f"Optimal weight: {optimal_weight:.2f}")
+    else:
+        inputs['Model Weight'] = st.slider(
+            "Model Weight (RF vs XGB)", 
+            0.0, 1.0, 0.5,
+            help="Manual weight adjustment between RF (1.0) and XGB (0.0)"
+        )
+
     # Reset button
     if st.button("🔄 Reset to Defaults"):
         for feature in inputs:
-            inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
+            if feature != 'Model Weight':  # Don't reset the weight
+                inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
 # ========== MAIN CONTENT ==========
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
 # Prepare input for prediction
-feature_names = list(feature_bounds.keys())[:-1]  # Exclude weight
+feature_names = list(feature_bounds.keys())
 input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
-input_weight = inputs['Model Weight (RF vs XGB)']
+weight = inputs['Model Weight']
 
 # Make predictions
 with st.spinner("Making predictions..."):
@@ -150,7 +193,7 @@ with st.spinner("Making predictions..."):
         scaled_features = scaler.transform(input_features)
         rf_pred = rf_model.predict(scaled_features)[0]
         xgb_pred = xgb_model.predict(scaled_features)[0]
-        ensemble_pred = input_weight * rf_pred + (1 - input_weight) * xgb_pred
+        ensemble_pred = weight * rf_pred + (1 - weight) * xgb_pred
     except Exception as e:
         st.error(f"Prediction error: {str(e)}")
         st.stop()
@@ -164,7 +207,7 @@ with col2:
     st.metric("XGBoost", f"{xgb_pred:.2f} MW", delta_color="off")
 with col3:
     st.metric(
-        f"Ensemble (Weight: {input_weight:.2f})", 
+        f"Ensemble (Weight: {weight:.2f})", 
         f"{ensemble_pred:.2f} MW",
         delta=f"{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg"
     )
@@ -208,7 +251,7 @@ if uploaded_file is not None:
             st.stop()
             
         df_processed = df.rename(columns=mapped_columns)
-        required_cols = feature_names  # From feature_bounds
+        required_cols = feature_names
         
         # Check for missing columns after mapping
         missing_cols = [col for col in required_cols if col not in df_processed.columns]
@@ -223,7 +266,7 @@ if uploaded_file is not None:
                 scaled = scaler.transform(features)
                 rf_preds = rf_model.predict(scaled)
                 xgb_preds = xgb_model.predict(scaled)
-                final_preds = input_weight * rf_preds + (1 - input_weight) * xgb_preds
+                final_preds = weight * rf_preds + (1 - weight) * xgb_preds
                 
                 results = df_processed.copy()
                 results['RF_Prediction (MW)'] = rf_preds
@@ -257,6 +300,6 @@ if uploaded_file is not None:
 # Footer
 st.markdown("---")
 st.caption("""
-Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
+Developed with Streamlit | Optimized with validation data  
 Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
-""".format(input_weight*100, (1-input_weight)*100))
+""".format(weight*100, (1-weight)*100))
