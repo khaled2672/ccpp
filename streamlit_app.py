@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 def set_theme(dark):
     plt.style.use('dark_background' if dark else 'default')
     if dark:
-        st.markdown("""
+        st.markdown(""" 
         <style>
         .stApp { background-color: #0e1117; color: #f1f1f1; }
         .css-1d391kg, .css-1cpxqw2 { color: #f1f1f1 !important; }
