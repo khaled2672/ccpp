@@ -1,188 +1,160 @@
 import streamlit as st
-import numpy as np
+import numpy as np 
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
-import seaborn as sns
-from io import StringIO
-import os
 
-# Constants
-FEATURE_BOUNDS = {
-    'Ambient Temperature (°C)': [0.0, 50.0],
-    'Ambient Relative Humidity (%)': [10.0, 100.0],
-    'Ambient Pressure (mbar)': [799.0, 1035.0],
-    'Exhaust Vacuum (cmHg)': [3.0, 12.0],
-    'Model Weight (RF vs XGB)': [0.0, 1.0]
-}
-
-# Theme configuration
+# ========== THEME ==========
 def set_theme(dark):
     plt.style.use('dark_background' if dark else 'default')
     if dark:
-        st.markdown(
-            """
-            <style>
-            .stApp {
-                background-color: #0e1117;
-                color: #f1f1f1;
-            }
-            .css-1d391kg, .css-1cpxqw2 {
-                color: #f1f1f1 !important;
-            }
-            .css-1v3fvcr {
-                background-color: #262730 !important;
-            }
-            .st-b7, .st-b8, .st-b9 {
-                color: #f1f1f1 !important;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown("""
+        <style>
+        .stApp { background-color: #0e1117; color: #f1f1f1; }
+        </style>""", unsafe_allow_html=True)
     else:
-        st.markdown(
-            """
-            <style>
-            .stApp {
-                background-color: #ffffff;
-                color: #000000;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown("""
+        <style>
+        .stApp { background-color: #ffffff; color: #000000; }
+        </style>""", unsafe_allow_html=True)
 
-# Cache resources for better performance
+# ========== CACHING ==========
 @st.cache_resource
 def load_models():
-    model_files = {
-        'rf_model': 'rf_model.joblib',
-        'xgb_model': 'xgb_model.joblib',
-        'scaler': 'scaler.joblib'
-    }
-    
-    loaded_models = {}
-    for name, file in model_files.items():
-        try:
-            if not os.path.exists(file):
-                st.error(f"Model file not found: {file}")
-                st.stop()
-            loaded_models[name] = joblib.load(file)
-        except Exception as e:
-            st.error(f"Error loading {name}: {str(e)}")
-            st.stop()
-    
-    return loaded_models['rf_model'], loaded_models['xgb_model'], loaded_models['scaler']
+    return (
+        joblib.load("rf_model.joblib"),
+        joblib.load("xgb_model.joblib"),
+        joblib.load("scaler.joblib")
+    )
 
-# Initialize session state for theme persistence
+@st.cache_data
+def generate_example_csv():
+    data = {
+        "Temperature (°C)": [25.0, 30.0, 27.5],
+        "Humidity (%)": [60.0, 65.0, 62.5],
+        "Pressure (mbar)": [1010.0, 1005.0, 1007.5],
+        "Vacuum (cmHg)": [5.0, 6.0, 5.5]
+    }
+    return pd.DataFrame(data).to_csv(index=False)
+
+# ========== COLUMN MAPPING ==========
+def map_columns(df):
+    column_mapping = {
+        "Ambient Temperature": ["Temperature", "Ambient Temperature", "Temp", "AT"],
+        "Ambient Relative Humidity": ["Humidity", "Relative Humidity", "RH"],
+        "Ambient Pressure": ["Pressure", "Ambient Pressure", "AP"],
+        "Exhaust Vacuum": ["Vacuum", "Exhaust Vacuum", "EV"]
+    }
+    mapped = {}
+    for key, names in column_mapping.items():
+        for name in names:
+            if name in df.columns:
+                mapped[key] = name
+                break
+    return mapped
+
+# ========== SESSION INIT ==========
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
+if 'reset' not in st.session_state:
+    st.session_state.reset = False
+
+# ========== FEATURE SETUP ==========
+FEATURE_BOUNDS = {
+    'Ambient Temperature': [0.0, 50.0],
+    'Ambient Relative Humidity': [10.0, 100.0],
+    'Ambient Pressure': [799.0, 1035.0],
+    'Exhaust Vacuum': [3.0, 12.0],
+    'Model Weight (RF vs XGB)': [0.0, 1.0]
+}
+DEFAULTS = {k: (v[0]+v[1])/2 for k,v in FEATURE_BOUNDS.items()}
+
+# Handle reset before slider creation
+if st.session_state.reset:
+    for feature in FEATURE_BOUNDS:
+        st.session_state[f"slider_{feature}"] = DEFAULTS[feature]
+    st.session_state.reset = False
 
 # ========== SIDEBAR ==========
 with st.sidebar:
     st.title("⚙️ CCPP Power Predictor")
-    
-    # Dark mode toggle
     st.session_state.dark_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
     set_theme(st.session_state.dark_mode)
-    
-    st.subheader("How to Use")
-    st.markdown("""
-    1. Adjust sliders to set plant conditions  
-    2. View the predicted power output  
-    3. Compare models using the toggle  
-    4. Upload CSV for batch predictions
-    """)
-    
-    # Load models
-    with st.spinner("Loading models..."):
-        rf_model, xgb_model, scaler = load_models()
+    st.markdown("1. Adjust sliders\n2. View predictions\n3. Upload CSV\n4. Compare models")
+
+    rf_model, xgb_model, scaler = load_models()
 
     # Input sliders
     st.subheader("Input Parameters")
     inputs = {}
     for feature, (low, high) in FEATURE_BOUNDS.items():
-        default = (low + high) / 2
-        step = 0.1 if feature in ['Ambient Temperature (°C)', 'Model Weight (RF vs XGB)'] else 1.0
-        inputs[feature] = st.slider(
-            feature, low, high, default, step,
-            help=f"Adjust {feature} between {low} and {high}",
-            key=f"slider_{feature}"  # Unique key for each slider
-        )
+        key = f"slider_{feature}"
+        default_val = st.session_state.get(key, DEFAULTS[feature])
+        inputs[feature] = st.slider(feature, low, high, default_val, key=key)
 
     # Reset button
     if st.button("🔄 Reset to Defaults"):
-        for feature in FEATURE_BOUNDS:
-            st.session_state[f"slider_{feature}"] = (FEATURE_BOUNDS[feature][0] + FEATURE_BOUNDS[feature][1]) / 2
+        st.session_state.reset = True
         st.rerun()
 
-# ========== MAIN CONTENT ==========
+# ========== MAIN ==========
 st.title("🔋 Combined Cycle Power Plant Predictor")
-st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
+st.markdown("Predict power output using ambient conditions with Random Forest & XGBoost.")
 
-# Prepare input for prediction
-feature_names = list(FEATURE_BOUNDS.keys())[:-1]  # Exclude weight
-input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
-input_weight = inputs['Model Weight (RF vs XGB)']
+# Prepare input
+input_keys = list(FEATURE_BOUNDS.keys())[:-1]  # exclude weight
+X_input = np.array([inputs[f] for f in input_keys]).reshape(1, -1)
+model_weight = inputs['Model Weight (RF vs XGB)']
 
-# Make predictions - this will run on every slider change
-with st.spinner("Calculating predictions..."):
-    try:
-        scaled_features = scaler.transform(input_features)
-        rf_pred = rf_model.predict(scaled_features)[0]
-        xgb_pred = xgb_model.predict(scaled_features)[0]
-        ensemble_pred = input_weight * rf_pred + (1 - input_weight) * xgb_pred
-        
-        # Store predictions in session state
-        st.session_state['predictions'] = {
-            'rf': rf_pred,
-            'xgb': xgb_pred,
-            'ensemble': ensemble_pred
-        }
-    except Exception as e:
-        st.error(f"Prediction error: {str(e)}")
-        st.stop()
+# Prediction
+with st.spinner("Predicting..."):
+    scaled = scaler.transform(X_input)
+    rf_pred = rf_model.predict(scaled)[0]
+    xgb_pred = xgb_model.predict(scaled)[0]
+    ensemble = model_weight * rf_pred + (1 - model_weight) * xgb_pred
 
-# Display results - will update reactively
+# Show output
 st.subheader("🔢 Model Predictions")
 col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric("Random Forest", 
-             f"{st.session_state['predictions']['rf']:.2f} MW", 
-             delta_color="off")
-with col2:
-    st.metric("XGBoost", 
-             f"{st.session_state['predictions']['xgb']:.2f} MW", 
-             delta_color="off")
-with col3:
-    st.metric(
-        f"Ensemble (Weight: {input_weight:.2f})", 
-        f"{st.session_state['predictions']['ensemble']:.2f} MW",
-        delta=f"{(st.session_state['predictions']['ensemble'] - (st.session_state['predictions']['rf'] + st.session_state['predictions']['xgb'])/2):.2f} vs avg"
-    )
+col1.metric("Random Forest", f"{rf_pred:.2f} MW")
+col2.metric("XGBoost", f"{xgb_pred:.2f} MW")
+col3.metric(f"Ensemble ({model_weight:.2f})", f"{ensemble:.2f} MW", 
+            delta=f"{(ensemble - ((rf_pred + xgb_pred)/2)):.2f} vs avg")
 
-# Visualization
-st.subheader("📊 Prediction Comparison")
-fig, ax = plt.subplots(figsize=(10, 5))
-models = ['Random Forest', 'XGBoost', 'Ensemble']
-values = [
-    st.session_state['predictions']['rf'],
-    st.session_state['predictions']['xgb'], 
-    st.session_state['predictions']['ensemble']
-]
-colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
-bars = ax.bar(models, values, color=colors)
-ax.set_ylabel('Power Output (MW)')
-ax.set_title('Model Predictions Comparison')
+# ========== CSV Upload ==========
+st.subheader("📂 Batch Prediction")
+st.download_button("⬇️ Download Example CSV", generate_example_csv(), file_name="example.csv", mime="text/csv")
 
-# Add value labels
-for bar in bars:
-    height = bar.get_height()
-    ax.text(bar.get_x() + bar.get_width()/2., height,
-            f'{height:.2f}',
-            ha='center', va='bottom')
+uploaded_file = st.file_uploader("Upload CSV for Batch Prediction", type=["csv"])
+if uploaded_file:
+    df = pd.read_csv(uploaded_file)
+    st.success("File uploaded successfully.")
+    st.dataframe(df.head())
 
-st.pyplot(fig)
+    mapped = map_columns(df)
+    if len(mapped) < 4:
+        st.error("Missing columns in uploaded file.")
+        st.stop()
 
-# Rest of your code (CSV upload, batch prediction etc.) remains the same...
+    df_renamed = df.rename(columns=mapped)
+    X_batch = df_renamed[input_keys]
+    try:
+        scaled_batch = scaler.transform(X_batch)
+        rf_preds = rf_model.predict(scaled_batch)
+        xgb_preds = xgb_model.predict(scaled_batch)
+        ensemble_preds = model_weight * rf_preds + (1 - model_weight) * xgb_preds
+        df_result = df.copy()
+        df_result["RF_Prediction"] = rf_preds
+        df_result["XGB_Prediction"] = xgb_preds
+        df_result["Ensemble_Prediction"] = ensemble_preds
+        st.success("Batch predictions complete.")
+        st.dataframe(df_result.head())
+
+        csv_result = df_result.to_csv(index=False).encode()
+        st.download_button("⬇️ Download Results", csv_result, file_name="ccpp_results.csv", mime="text/csv")
+    except Exception as e:
+        st.error(f"Prediction error: {str(e)}")
+
+# ========== FOOTER ==========
+st.markdown("---")
+st.caption(f"Model Weights — RF: {model_weight:.0%}, XGB: {(1-model_weight):.0%}")
