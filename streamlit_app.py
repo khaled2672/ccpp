@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
-import plotly.express as px
 from io import StringIO
 import time
 from sklearn.metrics import mean_absolute_error
