@@ -282,14 +282,7 @@ model_comparison = pd.DataFrame({
     'Weight': [st.session_state.model_weights.get(name, 0) for name in predictions.keys()]
 })
 
-fig = px.bar(model_comparison, 
-             x='Model', y='Prediction',
-             color='Model',
-             text='Prediction',
-             title="Model Predictions Comparison",
-             hover_data=['Weight'])
-fig.update_traces(texttemplate='%{text:.2f} MW', textposition='outside')
-st.plotly_chart(fig, use_container_width=True)
+
 
 # Feature importance visualization (placeholder - would need model-specific implementation)
 st.subheader("📈 Feature Importance")
