@@ -98,7 +98,7 @@ with st.sidebar:
 
     st.subheader("How to Use")
     st.markdown("""
-    1. Use + / - buttons to tweak input values
+    1. Use + / - buttons or slider to tweak input values
     2. View predicted power output
     3. Upload CSV for batch predictions
     """)
@@ -119,12 +119,19 @@ with st.sidebar:
         if feature not in st.session_state.inputs:
             st.session_state.inputs[feature] = (low + high) / 2
 
-        cols = st.columns([1, 3, 1])
+        cols = st.columns([1, 4, 1])
         with cols[0]:
             if st.button(f"➖", key=f"decrease_{feature}"):
                 st.session_state.inputs[feature] = max(low, st.session_state.inputs[feature] - 0.01)
         with cols[1]:
-            st.text(f"{st.session_state.inputs[feature]:.2f} {'' if feature == 'Model Weight (RF vs XGB)' else ''}")
+            st.session_state.inputs[feature] = st.slider(
+                label=feature,
+                min_value=low,
+                max_value=high,
+                value=st.session_state.inputs[feature],
+                step=0.01,
+                key=f"slider_{feature}"
+            )
         with cols[2]:
             if st.button(f"➕", key=f"increase_{feature}"):
                 st.session_state.inputs[feature] = min(high, st.session_state.inputs[feature] + 0.01)
@@ -240,4 +247,3 @@ st.caption("""
 Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
 Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
 """.format(input_weight*100, (1-input_weight)*100))
- 
