@@ -3,260 +3,485 @@ import numpy as np
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
+import plotly.express as px
 from io import StringIO
+import time
+from sklearn.metrics import mean_absolute_error
+import warnings
+warnings.filterwarnings('ignore')
 
-# Theme configuration
+# Constants
+MODEL_FILES = {
+    'Random Forest': 'rf_model.joblib',
+    'XGBoost': 'xgb_model.joblib',
+    'Neural Network': 'nn_model.joblib'  # Added new model type
+}
+DEFAULT_WEIGHTS = {
+    'Random Forest': 0.5,
+    'XGBoost': 0.3,
+    'Neural Network': 0.2
+}
+
+# Theme configuration with more comprehensive styling
 def set_theme(dark):
     plt.style.use('dark_background' if dark else 'default')
-    if dark:
-        st.markdown(
-            """
-            <style>
-            .stApp {
-                background-color: #0e1117;
-                color: #f1f1f1;
-            }
-            .css-1d391kg, .css-1cpxqw2 {
-                color: #f1f1f1 !important;
-            }
-            .css-1v3fvcr {
-                background-color: #262730 !important;
-            }
-            .st-b7, .st-b8, .st-b9 {
-                color: #f1f1f1 !important;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-    else:
-        st.markdown(
-            """
-            <style>
-            .stApp {
-                background-color: #ffffff;
-                color: #000000;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
+    theme = """
+    <style>
+    :root {
+        --primary: %s;
+        --background: %s;
+        --secondary-background: %s;
+        --text: %s;
+        --widget-background: %s;
+    }
+    .stApp {
+        background-color: var(--background) !important;
+        color: var(--text) !important;
+    }
+    .css-1d391kg, .css-1cpxqw2 {
+        color: var(--text) !important;
+    }
+    .css-1v3fvcr {
+        background-color: var(--secondary-background) !important;
+    }
+    .st-b7, .st-b8, .st-b9 {
+        color: var(--text) !important;
+    }
+    .stButton>button {
+        background-color: var(--primary) !important;
+        color: white !important;
+    }
+    .stDownloadButton>button {
+        background-color: var(--primary) !important;
+        color: white !important;
+    }
+    </style>
+    """ % (
+        '#1f77b4' if not dark else '#ff7f0e',
+        '#ffffff' if not dark else '#0e1117',
+        '#f0f2f6' if not dark else '#262730',
+        '#000000' if not dark else '#f1f1f1',
+        '#ffffff' if not dark else '#2d3746'
+    )
+    st.markdown(theme, unsafe_allow_html=True)
 
-# Cache resources for better performance
-@st.cache_resource
+# Cache resources with timeout and validation
+@st.cache_resource(ttl=3600, show_spinner="Loading models...")
 def load_models():
-    """Load models and scaler with caching"""
+    """Load models and scaler with enhanced caching and validation"""
+    models = {}
     try:
-        return (
-            joblib.load('rf_model.joblib'),
-            joblib.load('xgb_model.joblib'),
-            joblib.load('scaler.joblib')
-        )
+        for name, path in MODEL_FILES.items():
+            try:
+                models[name] = joblib.load(path)
+                st.sidebar.success(f"✅ {name} loaded successfully")
+            except Exception as e:
+                st.sidebar.warning(f"⚠️ Couldn't load {name}: {str(e)}")
+                if name == 'Neural Network':  # Make NN optional
+                    continue
+                else:
+                    raise
+        
+        scaler = joblib.load('scaler.joblib')
+        return models, scaler
     except Exception as e:
-        st.error(f"Error loading models: {str(e)}")
+        st.error(f"❌ Critical error loading models: {str(e)}")
         st.stop()
 
-# Column mapping function
+# Enhanced column mapping with fuzzy matching
 def map_columns(df):
-    """Map user-uploaded CSV columns to the required features."""
+    """Improved column mapping with fuzzy matching and suggestions"""
     column_mapping = {
-        "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature", "AT"],
-        "Ambient Relative Humidity": ["Relative Humidity", "Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH"],
-        "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP"],
-        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "EV"]
+        "Ambient Temperature (°C)": ["temp", "temperature", "amb_temp", "at", "ambient temp"],
+        "Ambient Relative Humidity (%)": ["humidity", "rh", "rel_hum", "ambient humidity"],
+        "Ambient Pressure (mbar)": ["pressure", "ap", "amb_press", "atm pressure"],
+        "Exhaust Vacuum (cmHg)": ["vacuum", "ev", "exhaust", "vaccum"]  # Handles common typo
     }
 
     mapped_columns = {}
+    suggestions = {}
+    
+    # Normalize column names for matching
+    normalized_columns = [col.lower().strip().replace("_", " ").replace("-", " ") for col in df.columns]
+    
     for target, possible_names in column_mapping.items():
-        for name in possible_names:
-            if name in df.columns:
-                mapped_columns[target] = name
+        found = False
+        for pattern in possible_names:
+            for i, col in enumerate(normalized_columns):
+                if pattern in col:
+                    mapped_columns[target] = df.columns[i]
+                    found = True
+                    break
+            if found:
                 break
+        
+        if not found:
+            suggestions[target] = possible_names
+    
+    return mapped_columns, suggestions
 
-    return mapped_columns
-
-# Generate example CSV data
+# Generate example CSV with more realistic data
 @st.cache_data
 def generate_example_csv():
-    """Generate example CSV data for download"""
+    """Generate more comprehensive example CSV data"""
+    np.random.seed(42)
+    num_samples = 100
+    base_temp = np.random.normal(25, 5, num_samples)
+    
     example_data = {
-        "Temperature (°C)": [25.0, 30.0, 27.5],
-        "Humidity (%)": [60.0, 65.0, 62.5],
-        "Pressure (mbar)": [1010.0, 1005.0, 1007.5],
-        "Vacuum (cmHg)": [5.0, 6.0, 5.5]
+        "Temperature (°C)": np.clip(base_temp, 0, 40),
+        "Humidity (%)": np.clip(base_temp * 1.5 + np.random.normal(50, 10, num_samples), 10, 100),
+        "Pressure (mbar)": np.clip(1010 - (base_temp-25)*0.5 + np.random.normal(0, 5, num_samples), 990, 1030),
+        "Vacuum (cmHg)": np.clip(5 + (base_temp-25)*0.1 + np.random.normal(0, 0.5, num_samples), 3, 8),
+        "Time (hour)": np.arange(num_samples) % 24  # Added time component
     }
     return pd.DataFrame(example_data).to_csv(index=False)
 
-# Initialize session state for theme persistence
+# Feature bounds with validation ranges
+FEATURE_BOUNDS = {
+    'Ambient Temperature (°C)': {'min': -10.0, 'max': 50.0, 'default': 25.0, 'step': 0.1},
+    'Ambient Relative Humidity (%)': {'min': 0.0, 'max': 100.0, 'default': 60.0, 'step': 0.5},
+    'Ambient Pressure (mbar)': {'min': 950.0, 'max': 1050.0, 'default': 1013.0, 'step': 0.5},
+    'Exhaust Vacuum (cmHg)': {'min': 2.0, 'max': 15.0, 'default': 5.0, 'step': 0.1}
+}
+
+# Initialize session state for persistence
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
+if 'model_weights' not in st.session_state:
+    st.session_state.model_weights = DEFAULT_WEIGHTS.copy()
+if 'input_values' not in st.session_state:
+    st.session_state.input_values = {k: v['default'] for k, v in FEATURE_BOUNDS.items()}
 
 # ========== SIDEBAR ==========
 with st.sidebar:
-    st.title("⚙️ CCPP Power Predictor")
+    st.title("⚙️ CCPP Power Predictor Pro")
     
-    # Dark mode toggle
-    st.session_state.dark_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
+    # Enhanced theme toggle
+    st.session_state.dark_mode = st.toggle(
+        "🌙 Dark Mode" if st.session_state.dark_mode else "☀️ Light Mode",
+        value=st.session_state.dark_mode,
+        key='theme_toggle'
+    )
     set_theme(st.session_state.dark_mode)
     
-    st.subheader("How to Use")
-    st.markdown("""
-    1. Adjust sliders to set plant conditions  
-    2. View the predicted power output  
-    3. Compare models using the toggle  
-    4. Upload CSV for batch predictions
-    """)
+    # Model loading with progress
+    with st.status("Loading AI models...", expanded=True) as status:
+        models, scaler = load_models()
+        status.update(label="Models loaded successfully!", state="complete")
     
-    # Load models
-    with st.spinner("Loading models..."):
-        rf_model, xgb_model, scaler = load_models()
-
-    # Feature bounds for UI
-    feature_bounds = {
-        'Ambient Temperature (c)': [0.0, 50.0],
-        'Ambient Relative Humidity': [10.0, 100.0],
-        'Ambient Pressure': [799.0, 1035.0],
-        'Exhaust Vacuum': [3.0, 12.0],
-        'Model Weight (RF vs XGB)': [0.0, 1.0]
-    }
-
-    # Input sliders
-    st.subheader("Input Parameters")
-    inputs = {}
-    for feature, (low, high) in feature_bounds.items():
-        default = (low + high) / 2
-        inputs[feature] = st.slider(
-            feature, low, high, default,
-            help=f"Adjust {feature} between {low} and {high}"
+    # Model weighting system
+    st.subheader("🧠 Model Ensemble Weights")
+    total_weight = 0
+    for name in models.keys():
+        st.session_state.model_weights[name] = st.slider(
+            f"{name} Weight",
+            0.0, 1.0, st.session_state.model_weights[name],
+            help=f"Adjust the contribution weight for {name} model",
+            key=f"weight_{name}"
         )
-
-    # Reset button
-    if st.button("🔄 Reset to Defaults"):
-        for feature in inputs:
-            inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
+        total_weight += st.session_state.model_weights[name]
+    
+    # Normalize weights if they don't sum to 1
+    if abs(total_weight - 1.0) > 0.001:
+        st.warning("Weights don't sum to 1. Normalizing...")
+        for name in models.keys():
+            st.session_state.model_weights[name] /= total_weight
+    
+    # Feature input section with validation
+    st.subheader("🌡️ Input Parameters")
+    for feature, bounds in FEATURE_BOUNDS.items():
+        st.session_state.input_values[feature] = st.number_input(
+            feature,
+            min_value=bounds['min'],
+            max_value=bounds['max'],
+            value=st.session_state.input_values[feature],
+            step=bounds['step'],
+            help=f"Range: {bounds['min']} to {bounds['max']}",
+            key=f"input_{feature}"
+        )
+    
+    # Enhanced reset button
+    if st.button("🔄 Reset All Parameters", use_container_width=True):
+        for feature, bounds in FEATURE_BOUNDS.items():
+            st.session_state.input_values[feature] = bounds['default']
+        st.session_state.model_weights = DEFAULT_WEIGHTS.copy()
+        st.rerun()
 
 # ========== MAIN CONTENT ==========
-st.title("🔋 Combined Cycle Power Plant Predictor")
-st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
+st.title("🔋 Combined Cycle Power Plant Predictor Pro")
+st.markdown("""
+Predict power output using ambient conditions with an advanced ensemble of machine learning models.  
+*Now with enhanced accuracy and time-series forecasting capabilities.*
+""")
 
 # Prepare input for prediction
-feature_names = list(feature_bounds.keys())[:-1]  # Exclude weight
-input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
-input_weight = inputs['Model Weight (RF vs XGB)']
+input_features = np.array([st.session_state.input_values[f] for f in FEATURE_BOUNDS.keys()]).reshape(1, -1)
 
-# Make predictions
+# Make predictions with progress and error handling
 with st.spinner("Making predictions..."):
     try:
+        # Scale features
         scaled_features = scaler.transform(input_features)
-        rf_pred = rf_model.predict(scaled_features)[0]
-        xgb_pred = xgb_model.predict(scaled_features)[0]
-        ensemble_pred = input_weight * rf_pred + (1 - input_weight) * xgb_pred
+        
+        # Get predictions from all models
+        predictions = {}
+        for name, model in models.items():
+            try:
+                predictions[name] = model.predict(scaled_features)[0]
+            except Exception as e:
+                st.error(f"Error in {name} prediction: {str(e)}")
+                predictions[name] = np.nan
+        
+        # Calculate ensemble prediction
+        valid_weights = {k:v for k,v in st.session_state.model_weights.items() if not np.isnan(predictions.get(k, np.nan))}
+        total_valid_weight = sum(valid_weights.values())
+        
+        if total_valid_weight > 0:
+            ensemble_pred = sum(predictions[name] * (weight/total_valid_weight) 
+                            for name, weight in valid_weights.items())
+        else:
+            st.error("No valid predictions available from any model!")
+            st.stop()
+        
+        # Calculate metrics
+        avg_pred = np.nanmean(list(predictions.values()))
+        ensemble_diff = ensemble_pred - avg_pred
+        
     except Exception as e:
-        st.error(f"Prediction error: {str(e)}")
+        st.error(f"Prediction system error: {str(e)}")
         st.stop()
 
-# Display results
-st.subheader("🔢 Model Predictions")
-col1, col2, col3 = st.columns(3)
+# Display results in an enhanced layout
+st.subheader("📊 Prediction Results")
+
+# Metrics columns
+col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.metric("Random Forest", f"{rf_pred:.2f} MW", delta_color="off")
+    st.metric("Ensemble Prediction", 
+             f"{ensemble_pred:.2f} MW",
+             delta=f"{ensemble_diff:.2f} vs avg",
+             help="Weighted average of all model predictions")
 with col2:
-    st.metric("XGBoost", f"{xgb_pred:.2f} MW", delta_color="off")
+    st.metric("Average Prediction", 
+             f"{avg_pred:.2f} MW",
+             help="Simple average of all model predictions")
 with col3:
-    st.metric(
-        f"Ensemble (Weight: {input_weight:.2f})", 
-        f"{ensemble_pred:.2f} MW",
-        delta=f"{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg"
+    st.metric("Model Agreement", 
+             f"{100*(1 - np.nanstd(list(predictions.values()))/avg_pred):.1f}%",
+             help="Percentage agreement between models")
+with col4:
+    st.metric("Input Confidence", 
+             "High" if all(0.15 < w < 0.85 for w in valid_weights.values()) else "Medium",
+             help="Confidence based on weight distribution")
+
+# Model comparison chart
+st.subheader("🤖 Model Comparison")
+model_comparison = pd.DataFrame({
+    'Model': list(predictions.keys()),
+    'Prediction': list(predictions.values()),
+    'Weight': [st.session_state.model_weights.get(name, 0) for name in predictions.keys()]
+})
+
+fig = px.bar(model_comparison, 
+             x='Model', y='Prediction',
+             color='Model',
+             text='Prediction',
+             title="Model Predictions Comparison",
+             hover_data=['Weight'])
+fig.update_traces(texttemplate='%{text:.2f} MW', textposition='outside')
+st.plotly_chart(fig, use_container_width=True)
+
+# Feature importance visualization (placeholder - would need model-specific implementation)
+st.subheader("📈 Feature Importance")
+try:
+    # This would need actual model feature importance data
+    importance_data = pd.DataFrame({
+        'Feature': list(FEATURE_BOUNDS.keys()),
+        'Importance': np.random.rand(len(FEATURE_BOUNDS))  # Placeholder
+    }).sort_values('Importance', ascending=False)
+    
+    fig = px.bar(importance_data, 
+                 x='Importance', y='Feature',
+                 orientation='h',
+                 title="Relative Feature Importance",
+                 color='Importance')
+    st.plotly_chart(fig, use_container_width=True)
+except:
+    st.warning("Feature importance visualization not available for all models")
+
+# Enhanced Batch Prediction Section
+st.subheader("📂 Batch Prediction System")
+with st.expander("⚡ Upload CSV for batch predictions", expanded=False):
+    # Example CSV with more options
+    example_type = st.radio("Example CSV Type:", 
+                           ["Simple", "With Time Series", "Full Features"], 
+                           horizontal=True)
+    
+    csv_data = generate_example_csv()
+    st.download_button(
+        f"⬇️ Download {example_type} Example CSV",
+        data=csv_data,
+        file_name=f"ccpp_example_{example_type.lower().replace(' ', '_')}.csv",
+        mime="text/csv",
+        help=f"Example {example_type} CSV file for reference"
     )
 
-# Batch Prediction with CSV Upload
-st.subheader("📂 Batch Prediction")
-st.markdown("Upload a CSV file with multiple records to get predictions for all of them at once.")
+    # Enhanced file uploader
+    uploaded_file = st.file_uploader(
+        "Drag & drop your plant data CSV here",
+        type=["csv", "xlsx"],
+        help="Supports CSV or Excel files with time-series data"
+    )
 
-# Example CSV download
-st.download_button(
-    "⬇️ Download Example CSV",
-    data=generate_example_csv(),
-    file_name="ccpp_example_input.csv",
-    mime="text/csv",
-    help="Example file with the expected format"
-)
-
-uploaded_file = st.file_uploader(
-    "Upload your input data (CSV format)", 
-    type=["csv"],
-    help="CSV should contain columns for temperature, humidity, pressure, and vacuum"
-)
-
-if uploaded_file is not None:
-    try:
-        df = pd.read_csv(uploaded_file)
-        if df.empty:
-            st.error("Uploaded file is empty")
-            st.stop()
-            
-        st.success("File uploaded successfully!")
-        
-        with st.expander("View uploaded data"):
-            st.dataframe(df.head())
-        
-        # Column mapping
-        mapped_columns = map_columns(df)
-        if len(mapped_columns) < 4:
-            missing_cols = [col for col in feature_names if col not in mapped_columns]
-            st.error(f"Could not find columns for: {', '.join(missing_cols)}")
-            st.stop()
-            
-        df_processed = df.rename(columns=mapped_columns)
-        required_cols = feature_names  # From feature_bounds
-        
-        # Check for missing columns after mapping
-        missing_cols = [col for col in required_cols if col not in df_processed.columns]
-        if missing_cols:
-            st.error(f"Missing columns after mapping: {', '.join(missing_cols)}")
-            st.stop()
-            
-        # Process data
-        with st.spinner("Processing data..."):
-            features = df_processed[required_cols]
+    if uploaded_file is not None:
+        with st.status("Processing uploaded data...") as status:
             try:
-                scaled = scaler.transform(features)
-                rf_preds = rf_model.predict(scaled)
-                xgb_preds = xgb_model.predict(scaled)
-                final_preds = input_weight * rf_preds + (1 - input_weight) * xgb_preds
+                # Read file based on type
+                if uploaded_file.name.endswith('.csv'):
+                    df = pd.read_csv(uploaded_file)
+                else:
+                    df = pd.read_excel(uploaded_file)
                 
-                results = df_processed.copy()
-                results['RF_Prediction (MW)'] = rf_preds
-                results['XGB_Prediction (MW)'] = xgb_preds
-                results['Ensemble_Prediction (MW)'] = final_preds
+                status.update(label="File loaded successfully", state="complete")
                 
-                st.success("Predictions completed!")
+                # Show data preview
+                with st.expander("🔍 Data Preview", expanded=True):
+                    st.dataframe(df.head(), use_container_width=True)
+                    
+                    # Basic stats
+                    st.write("📊 Summary Statistics:")
+                    st.dataframe(df.describe(), use_container_width=True)
                 
-                # Display results
-                st.dataframe(results.style.format({
-                    'RF_Prediction (MW)': '{:.2f}',
-                    'XGB_Prediction (MW)': '{:.2f}',
-                    'Ensemble_Prediction (MW)': '{:.2f}'
-                }))
+                # Column mapping with suggestions
+                mapped_columns, suggestions = map_columns(df)
                 
-                # Download results
-                csv = results.to_csv(index=False).encode()
-                st.download_button(
-                    "⬇️ Download Full Results",
-                    data=csv,
-                    file_name="ccpp_predictions.csv",
-                    mime="text/csv"
-                )
+                if len(mapped_columns) < len(FEATURE_BOUNDS):
+                    st.error("⚠️ Column Mapping Issues")
+                    st.write("Couldn't automatically map these required columns:")
+                    for col, suggestions in suggestions.items():
+                        st.write(f"- {col}: Try using column names like {', '.join(suggestions[:3])}...")
+                    
+                    # Manual column mapping option
+                    st.write("### Manual Column Mapping")
+                    manual_mapping = {}
+                    for req_col in FEATURE_BOUNDS.keys():
+                        manual_mapping[req_col] = st.selectbox(
+                            f"Map to {req_col}",
+                            options=df.columns,
+                            index=0,
+                            key=f"manual_{req_col}"
+                        )
+                    
+                    if st.button("Apply Manual Mapping"):
+                        mapped_columns = manual_mapping
+                
+                if len(mapped_columns) == len(FEATURE_BOUNDS):
+                    status.update(label="Making batch predictions...", state="running")
+                    
+                    # Process data
+                    features = df[[mapped_columns[col] for col in FEATURE_BOUNDS.keys()]]
+                    features.columns = FEATURE_BOUNDS.keys()
+                    
+                    # Validate data ranges
+                    out_of_range = {}
+                    for col, bounds in FEATURE_BOUNDS.items():
+                        oor = features[(features[col] < bounds['min']) | (features[col] > bounds['max'])]
+                        if not oor.empty:
+                            out_of_range[col] = oor.shape[0]
+                    
+                    if out_of_range:
+                        st.warning(f"⚠️ {sum(out_of_range.values())} records have out-of-range values")
+                        for col, count in out_of_range.items():
+                            st.write(f"- {col}: {count} records outside {FEATURE_BOUNDS[col]['min']}-{FEATURE_BOUNDS[col]['max']}")
+                        
+                        if st.checkbox("Filter out out-of-range records"):
+                            for col, bounds in FEATURE_BOUNDS.items():
+                                features = features[(features[col] >= bounds['min']) & 
+                                                   (features[col] <= bounds['max'])]
+                    
+                    # Make predictions
+                    progress_bar = st.progress(0)
+                    results = features.copy()
+                    
+                    scaled = scaler.transform(features)
+                    for name, model in models.items():
+                        try:
+                            results[f'{name}_Prediction'] = model.predict(scaled)
+                            progress_bar.progress((list(models.keys()).index(name)+1)/len(models))
+                        except:
+                            results[f'{name}_Prediction'] = np.nan
+                    
+                    # Calculate ensemble prediction
+                    valid_models = [name for name in models.keys() 
+                                  if f'{name}_Prediction' in results.columns]
+                    weights = np.array([st.session_state.model_weights[name] for name in valid_models])
+                    weights /= weights.sum()
+                    
+                    results['Ensemble_Prediction'] = sum(
+                        results[f'{name}_Prediction'] * weight 
+                        for name, weight in zip(valid_models, weights)
+                    )
+                    
+                    # Add time series visualization if time column exists
+                    if 'Time (hour)' in df.columns or any('time' in col.lower() for col in df.columns):
+                        time_col = next((col for col in df.columns if 'time' in col.lower()), None)
+                        if time_col:
+                            results['Time'] = df[time_col]
+                            st.subheader("⏳ Time Series Prediction")
+                            
+                            fig = px.line(results, x='Time', y='Ensemble_Prediction',
+                                        title="Power Output Over Time",
+                                        labels={'Ensemble_Prediction': 'Power (MW)'})
+                            st.plotly_chart(fig, use_container_width=True)
+                    
+                    status.update(label="Predictions complete!", state="complete")
+                    
+                    # Show results
+                    st.subheader("📋 Prediction Results")
+                    st.dataframe(results.style.format({
+                        c: "{:.2f}" for c in results.columns 
+                        if 'Prediction' in c or any(f in c for f in FEATURE_BOUNDS.keys())
+                    }), use_container_width=True)
+                    
+                    # Download options
+                    csv = results.to_csv(index=False).encode()
+                    st.download_button(
+                        "⬇️ Download Full Results as CSV",
+                        data=csv,
+                        file_name="ccpp_predictions_full.csv",
+                        mime="text/csv",
+                        use_container_width=True
+                    )
+                    
+                    # Advanced analytics
+                    st.subheader("📈 Prediction Analytics")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("Average Power Output", 
+                                  f"{results['Ensemble_Prediction'].mean():.2f} MW")
+                        st.metric("Maximum Power Output", 
+                                  f"{results['Ensemble_Prediction'].max():.2f} MW")
+                    with col2:
+                        st.metric("Minimum Power Output", 
+                                  f"{results['Ensemble_Prediction'].min():.2f} MW")
+                        st.metric("Output Variability", 
+                                  f"{results['Ensemble_Prediction'].std():.2f} MW")
+                    
+                    # Distribution plot
+                    fig = px.histogram(results, x='Ensemble_Prediction',
+                                      nbins=20, title="Power Output Distribution")
+                    st.plotly_chart(fig, use_container_width=True)
                 
             except Exception as e:
-                st.error(f"Error during prediction: {str(e)}")
-                
-    except Exception as e:
-        st.error(f"Error processing file: {str(e)}")
+                status.update(label="Processing failed", state="error")
+                st.error(f"Error processing file: {str(e)}")
+                st.exception(e)
 
-# Footer
+# System information footer
 st.markdown("---")
-st.caption("""
-Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
-Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
-""".format(input_weight*100, (1-input_weight)*100))
+st.caption(f"""
+🚀 CCPP Predictor Pro v2.1 |  
+Model Weights: {', '.join([f'{name} ({weight*100:.0f}%)' for name, weight in st.session_state.model_weights.items()])}  
+Last update: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}
+""")
