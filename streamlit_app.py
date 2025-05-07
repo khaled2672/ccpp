@@ -86,6 +86,9 @@ def generate_example_csv():
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
+if 'inputs' not in st.session_state:
+    st.session_state.inputs = {}
+
 # ========== SIDEBAR ==========
 with st.sidebar:
     st.title("⚙️ CCPP Power Predictor")
@@ -95,10 +98,9 @@ with st.sidebar:
 
     st.subheader("How to Use")
     st.markdown("""
-    1. Adjust sliders to set plant conditions  
-    2. View the predicted power output  
-    3. Compare models using the toggle  
-    4. Upload CSV for batch predictions
+    1. Use + / - buttons to tweak input values
+    2. View predicted power output
+    3. Upload CSV for batch predictions
     """)
 
     with st.spinner("Loading models..."):
@@ -113,40 +115,27 @@ with st.sidebar:
     }
 
     st.subheader("Input Parameters")
-    inputs = {}
     for feature, (low, high) in feature_bounds.items():
-        default = (low + high) / 2
-        state_key = f"{feature}_value"
-        if state_key not in st.session_state:
-            st.session_state[state_key] = round(default, 2)
+        if feature not in st.session_state.inputs:
+            st.session_state.inputs[feature] = (low + high) / 2
 
-        st.write(f"**{feature}**")
-        col_dec, col_input, col_inc = st.columns([1, 4, 1])
-        with col_dec:
-            if st.button("➖", key=f"{feature}_dec"):
-                st.session_state[state_key] = round(max(low, st.session_state[state_key] - 0.01), 2)
-        with col_input:
-            st.session_state[state_key] = st.number_input(
-                "", min_value=low, max_value=high, value=st.session_state[state_key], step=0.01,
-                key=f"{feature}_input"
-            )
-        with col_inc:
-            if st.button("➕", key=f"{feature}_inc"):
-                st.session_state[state_key] = round(min(high, st.session_state[state_key] + 0.01), 2)
-
-        inputs[feature] = st.session_state[state_key]
-
-    if st.button("🔄 Reset to Defaults"):
-        for feature in feature_bounds:
-            st.session_state[f"{feature}_value"] = round((feature_bounds[feature][0] + feature_bounds[feature][1]) / 2, 2)
+        cols = st.columns([1, 3, 1])
+        with cols[0]:
+            if st.button(f"➖", key=f"decrease_{feature}"):
+                st.session_state.inputs[feature] = max(low, st.session_state.inputs[feature] - 0.01)
+        with cols[1]:
+            st.text(f"{st.session_state.inputs[feature]:.2f} {'' if feature == 'Model Weight (RF vs XGB)' else ''}")
+        with cols[2]:
+            if st.button(f"➕", key=f"increase_{feature}"):
+                st.session_state.inputs[feature] = min(high, st.session_state.inputs[feature] + 0.01)
 
 # ========== MAIN CONTENT ==========
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
 feature_names = list(feature_bounds.keys())[:-1]
-input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
-input_weight = inputs['Model Weight (RF vs XGB)']
+input_features = np.array([st.session_state.inputs[f] for f in feature_names]).reshape(1, -1)
+input_weight = st.session_state.inputs['Model Weight (RF vs XGB)']
 
 with st.spinner("Making predictions..."):
     try:
@@ -166,7 +155,7 @@ with col2:
     st.metric("XGBoost", f"{xgb_pred:.2f} MW", delta_color="off")
 with col3:
     st.metric(
-        f"Ensemble (Weight: {input_weight:.2f})", 
+        f"Ensemble (Weight: {input_weight:.2f})",
         f"{ensemble_pred:.2f} MW",
         delta=f"{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg"
     )
@@ -183,7 +172,7 @@ st.download_button(
 )
 
 uploaded_file = st.file_uploader(
-    "Upload your input data (CSV format)", 
+    "Upload your input data (CSV format)",
     type=["csv"],
     help="CSV should contain columns for temperature, humidity, pressure, and vacuum"
 )
@@ -196,7 +185,6 @@ if uploaded_file is not None:
             st.stop()
 
         st.success("File uploaded successfully!")
-
         with st.expander("View uploaded data"):
             st.dataframe(df.head())
 
@@ -208,7 +196,6 @@ if uploaded_file is not None:
 
         df_processed = df.rename(columns=mapped_columns)
         required_cols = feature_names
-
         missing_cols = [col for col in required_cols if col not in df_processed.columns]
         if missing_cols:
             st.error(f"Missing columns after mapping: {', '.join(missing_cols)}")
@@ -228,7 +215,6 @@ if uploaded_file is not None:
                 results['Ensemble_Prediction (MW)'] = final_preds
 
                 st.success("Predictions completed!")
-
                 st.dataframe(results.style.format({
                     'RF_Prediction (MW)': '{:.2f}',
                     'XGB_Prediction (MW)': '{:.2f}',
@@ -250,9 +236,7 @@ if uploaded_file is not None:
         st.error(f"Error processing file: {str(e)}")
 
 st.markdown("---")
-st.caption(
-    """
-    Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
-    Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
-    """.format(input_weight*100, (1-input_weight)*100)
-)
+st.caption("""
+Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
+Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
+""".format(input_weight*100, (1-input_weight)*100))
