@@ -144,15 +144,16 @@ feature_names = list(feature_bounds.keys())[:-1]  # Exclude weight
 input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
 input_weight = inputs['Model Weight (RF vs XGB)']
 
-# Make predictions - no caching here!
-try:
-    scaled_features = scaler.transform(input_features)
-    rf_pred = rf_model.predict(scaled_features)[0]
-    xgb_pred = xgb_model.predict(scaled_features)[0]
-    ensemble_pred = input_weight * rf_pred + (1 - input_weight) * xgb_pred
-except Exception as e:
-    st.error(f"Prediction error: {str(e)}")
-    st.stop()
+# Make predictions
+with st.spinner("Making predictions..."):
+    try:
+        scaled_features = scaler.transform(input_features)
+        rf_pred = rf_model.predict(scaled_features)[0]
+        xgb_pred = xgb_model.predict(scaled_features)[0]
+        ensemble_pred = input_weight * rf_pred + (1 - input_weight) * xgb_pred
+    except Exception as e:
+        st.error(f"Prediction error: {str(e)}")
+        st.stop()
 
 # Display results
 st.subheader("🔢 Model Predictions")
