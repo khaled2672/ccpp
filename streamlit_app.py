@@ -120,20 +120,48 @@ with st.sidebar:
         'Model Weight (RF vs XGB)': [0.0, 1.0]
     }
 
-    # Input sliders
+    # Input sliders and buttons
     st.subheader("Input Parameters")
     inputs = {}
     for feature, (low, high) in feature_bounds.items():
         default = (low + high) / 2
-        inputs[feature] = st.slider(
-            feature, low, high, default,
-            help=f"Adjust {feature} between {low} and {high}"
-        )
+
+        if feature == 'Model Weight (RF vs XGB)':
+            if 'model_weight' not in st.session_state:
+                st.session_state.model_weight = default
+
+            col_minus, col_val, col_plus = st.columns([1, 2, 1])
+
+            with col_minus:
+                if st.button("➖", key="decrease_weight"):
+                    st.session_state.model_weight = max(low, st.session_state.model_weight - 0.1)
+
+            with col_val:
+                st.session_state.model_weight = st.number_input(
+                    feature, min_value=low, max_value=high,
+                    value=st.session_state.model_weight, step=0.1,
+                    key="model_weight_input"
+                )
+
+            with col_plus:
+                if st.button("➕", key="increase_weight"):
+                    st.session_state.model_weight = min(high, st.session_state.model_weight + 0.1)
+
+            inputs[feature] = st.session_state.model_weight
+        else:
+            inputs[feature] = st.slider(
+                feature, low, high, default,
+                help=f"Adjust {feature} between {low} and {high}"
+            )
 
     # Reset button
     if st.button("🔄 Reset to Defaults"):
-        for feature in inputs:
-            inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
+        for feature in feature_bounds:
+            if feature == 'Model Weight (RF vs XGB)':
+                st.session_state.model_weight = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
+                inputs[feature] = st.session_state.model_weight
+            else:
+                inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
 # ========== MAIN CONTENT ==========
 st.title("🔋 Combined Cycle Power Plant Predictor")
