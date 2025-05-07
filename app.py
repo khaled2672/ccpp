@@ -69,22 +69,22 @@ def predict_power(input_data):
         'Ensemble': ensemble_pred
     }
 
-# Make prediction when button is clicked
-if st.button('Predict Power Output'):
-    predictions = predict_power(input_df)
-    
-    st.subheader('Prediction Results')
-    st.metric(label="Ensemble Predicted Power Output", value=f"{predictions['Ensemble']:.2f} MW")
-    
-    st.write("Individual Model Predictions:")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(label="Random Forest", value=f"{predictions['Random Forest']:.2f} MW")
-    with col2:
-        st.metric(label="XGBoost", value=f"{predictions['XGBoost']:.2f} MW")
-    
-    # Show ensemble weight
-    st.write(f"Ensemble Weight: Random Forest ({best_w:.2f}), XGBoost ({(1-best_w):.2f})")
+# Make predictions immediately when inputs change
+predictions = predict_power(input_df)
+
+# Display prediction results
+st.subheader('Prediction Results')
+st.metric(label="Ensemble Predicted Power Output", value=f"{predictions['Ensemble']:.2f} MW")
+
+st.write("Individual Model Predictions:")
+col1, col2 = st.columns(2)
+with col1:
+    st.metric(label="Random Forest", value=f"{predictions['Random Forest']:.2f} MW")
+with col2:
+    st.metric(label="XGBoost", value=f"{predictions['XGBoost']:.2f} MW")
+
+# Show ensemble weight
+st.write(f"Ensemble Weight: Random Forest ({best_w:.2f}), XGBoost ({(1-best_w):.2f})")
 
 # Add some explanations
 st.markdown("""
@@ -93,7 +93,3 @@ st.markdown("""
 - **XGBoost**: 300 trees with max depth of 9, learning rate 0.1
 - **Ensemble**: Weighted combination of both models
 """)
-
-# Optional: Add visualization
-st.subheader('Feature Importance')
-# You could add SHAP plots or other visualizations here if desired
