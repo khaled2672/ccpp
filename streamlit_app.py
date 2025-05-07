@@ -1,12 +1,41 @@
 import streamlit as st
 import numpy as np
+import joblib
 
-# Define a function to increase or decrease values
-def adjust_value(value, delta=0.01, min_val=0.0, max_val=100.0):
-    """Adjust the value within bounds."""
-    new_value = value + delta
-    new_value = max(min(new_value, max_val), min_val)
-    return new_value
+# Theme configuration
+def set_theme(dark):
+    """Function to set the theme based on dark mode toggle."""
+    import matplotlib.pyplot as plt
+    plt.style.use('dark_background' if dark else 'default')
+    if dark:
+        st.markdown(
+            """ <style>
+            .stApp {
+            background-color: #0e1117;
+            color: #f1f1f1;
+            }
+            .css-1d391kg, .css-1cpxqw2 {
+            color: #f1f1f1 !important;
+            }
+            .css-1v3fvcr {
+            background-color: #262730 !important;
+            }
+            .st-b7, .st-b8, .st-b9 {
+            color: #f1f1f1 !important;
+            } </style>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            """ <style>
+            .stApp {
+            background-color: #ffffff;
+            color: #000000;
+            } </style>
+            """,
+            unsafe_allow_html=True
+        )
 
 # Initialize session state for theme persistence
 if 'dark_mode' not in st.session_state:
@@ -36,6 +65,13 @@ feature_bounds = {
     'Exhaust Vacuum': [3.0, 12.0],
     'Model Weight (RF vs XGB)': [0.0, 1.0]
 }
+
+# Define a function to adjust slider values
+def adjust_value(value, delta=0.01, min_val=0.0, max_val=100.0):
+    """Adjust the value within bounds."""
+    new_value = value + delta
+    new_value = max(min(new_value, max_val), min_val)
+    return new_value
 
 # Input sliders with increment and decrement buttons
 st.subheader("Input Parameters")
