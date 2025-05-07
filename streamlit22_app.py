@@ -261,7 +261,7 @@ elif options == "Power Optimization":
                     
                     ensemble_pred = weights * rf_pred + (1 - weights) * xgb_pred
                     return -ensemble_pred.flatten()  # Negative for maximization
-                
+                 
                 # Run PSO
                 optimizer = GlobalBestPSO(
                     n_particles=n_particles,
