@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
-from io import StringIO
+from io import StringIO  
 
 # Theme configuration
 def set_theme(dark):
@@ -91,8 +91,7 @@ def generate_example_csv():
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
-# ========== SIDEBAR ==========
-
+# ========== SIDEBAR ========== 
 with st.sidebar:
     st.title("⚙️ CCPP Power Predictor")
     
@@ -114,33 +113,20 @@ with st.sidebar:
 
     # Feature bounds for UI
     feature_bounds = {
-        'Ambient Temperature (°C)': [0.0, 50.0],
-        'Ambient Relative Humidity (%)': [10.0, 100.0],
-        'Ambient Pressure (mbar)': [799.0, 1035.0],
-        'Exhaust Vacuum (cmHg)': [3.0, 12.0],
+        'Ambient Temperature': [0.0, 50.0],
+        'Ambient Relative Humidity': [10.0, 100.0],
+        'Ambient Pressure': [799.0, 1035.0],
+        'Exhaust Vacuum': [3.0, 12.0],
         'Model Weight (RF vs XGB)': [0.0, 1.0]
     }
 
-    # Input sliders with units
+    # Input sliders
     st.subheader("Input Parameters")
     inputs = {}
     for feature, (low, high) in feature_bounds.items():
         default = (low + high) / 2
-        unit = ''
-        
-        # Assign units to each feature
-        if 'Temperature' in feature:
-            unit = '°C'
-        elif 'Humidity' in feature:
-            unit = '%'
-        elif 'Pressure' in feature:
-            unit = 'mbar'
-        elif 'Vacuum' in feature:
-            unit = 'cmHg'
-        
-        # Create sliders with units
         inputs[feature] = st.slider(
-            f"{feature} ({unit})", low, high, default,
+            feature, low, high, default,
             help=f"Adjust {feature} between {low} and {high}"
         )
 
@@ -149,8 +135,7 @@ with st.sidebar:
         for feature in inputs:
             inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
-# ========== MAIN CONTENT ==========
-
+# ========== MAIN CONTENT ========== 
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
@@ -217,11 +202,13 @@ if uploaded_file is not None:
         
         # Column mapping
         mapped_columns = map_columns(df)
-        if len(mapped_columns) < 4:
-            missing_cols = [col for col in feature_names if col not in mapped_columns]
-            st.error(f"Could not find columns for: {', '.join(missing_cols)}")
+        
+        # Check if all required columns were mapped correctly
+        missing_cols = [col for col in feature_names if col not in mapped_columns]
+        if missing_cols:
+            st.error(f"Missing columns in the uploaded file: {', '.join(missing_cols)}. Please ensure that the CSV contains the following columns: 'Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure', and 'Exhaust Vacuum'.")
             st.stop()
-            
+
         df_processed = df.rename(columns=mapped_columns)
         required_cols = feature_names  # From feature_bounds
         
