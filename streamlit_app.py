@@ -3,10 +3,22 @@ import numpy as np
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
+import seaborn as sns
 from io import StringIO
+import os
+
+# Constants
+FEATURE_BOUNDS = {
+    'Ambient Temperature (°C)': [0.0, 50.0],
+    'Ambient Relative Humidity (%)': [10.0, 100.0],
+    'Ambient Pressure (mbar)': [799.0, 1035.0],
+    'Exhaust Vacuum (cmHg)': [3.0, 12.0],
+    'Model Weight (RF vs XGB)': [0.0, 1.0]
+}
 
 # Theme configuration
 def set_theme(dark):
+    """Configure light/dark theme with custom styles"""
     plt.style.use('dark_background' if dark else 'default')
     if dark:
         st.markdown(
@@ -25,6 +37,8 @@ def set_theme(dark):
             .st-b7, .st-b8, .st-b9 {
                 color: #f1f1f1 !important;
             }
+            .st-cb { background-color: #1a1a2e; }
+            .st-cg { color: #f1f1f1 !important; }
             </style>
             """,
             unsafe_allow_html=True
@@ -37,6 +51,7 @@ def set_theme(dark):
                 background-color: #ffffff;
                 color: #000000;
             }
+            .st-cb { background-color: #f0f2f6; }
             </style>
             """,
             unsafe_allow_html=True
@@ -45,32 +60,43 @@ def set_theme(dark):
 # Cache resources for better performance
 @st.cache_resource
 def load_models():
-    """Load models and scaler with caching"""
-    try:
-        return (
-            joblib.load('rf_model.joblib'),
-            joblib.load('xgb_model.joblib'),
-            joblib.load('scaler.joblib')
-        )
-    except Exception as e:
-        st.error(f"Error loading models: {str(e)}")
-        st.stop()
+    """Load models and scaler with caching and validation"""
+    model_files = {
+        'rf_model': 'rf_model.joblib',
+        'xgb_model': 'xgb_model.joblib',
+        'scaler': 'scaler.joblib'
+    }
+    
+    loaded_models = {}
+    for name, file in model_files.items():
+        try:
+            if not os.path.exists(file):
+                st.error(f"Model file not found: {file}")
+                st.stop()
+            loaded_models[name] = joblib.load(file)
+        except Exception as e:
+            st.error(f"Error loading {name}: {str(e)}")
+            st.stop()
+    
+    return loaded_models['rf_model'], loaded_models['xgb_model'], loaded_models['scaler']
 
 # Column mapping function
 def map_columns(df):
-    """Map user-uploaded CSV columns to the required features."""
+    """Map user-uploaded CSV columns to the required features with fuzzy matching"""
     column_mapping = {
-        "Ambient Temperature (°C)": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature", "AT"],
-        "Ambient Relative Humidity (%)": ["Relative Humidity", "Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH"],
-        "Ambient Pressure (mbar)": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP"],
-        "Exhaust Vacuum (cmHg)": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "EV"]
+        "Ambient Temperature (°C)": ["temperature", "ambient temp", "temp", "at", "amb_temp"],
+        "Ambient Relative Humidity (%)": ["humidity", "relative humidity", "rh", "ambient humidity"],
+        "Ambient Pressure (mbar)": ["pressure", "ambient pressure", "ap", "amb_press"],
+        "Exhaust Vacuum (cmHg)": ["vacuum", "exhaust vacuum", "ev", "exh_vac"]
     }
 
     mapped_columns = {}
     for target, possible_names in column_mapping.items():
         for name in possible_names:
-            if name in df.columns:
-                mapped_columns[target] = name
+            # Case insensitive matching
+            matching_cols = [col for col in df.columns if name.lower() in col.lower()]
+            if matching_cols:
+                mapped_columns[target] = matching_cols[0]
                 break
 
     return mapped_columns
@@ -78,14 +104,52 @@ def map_columns(df):
 # Generate example CSV data
 @st.cache_data
 def generate_example_csv():
-    """Generate example CSV data for download"""
+    """Generate example CSV data with realistic ranges"""
     example_data = {
-        "Temperature (°C)": [25.0, 30.0, 27.5],
-        "Humidity (%)": [60.0, 65.0, 62.5],
-        "Pressure (mbar)": [1010.0, 1005.0, 1007.5],
-        "Vacuum (cmHg)": [5.0, 6.0, 5.5]
+        "Temperature": np.random.uniform(0, 50, 100),
+        "Humidity": np.random.uniform(10, 100, 100),
+        "Pressure": np.random.uniform(990, 1035, 100),
+        "Vacuum": np.random.uniform(3, 12, 100)
     }
     return pd.DataFrame(example_data).to_csv(index=False)
+
+# Visualization functions
+def plot_predictions_comparison(rf_pred, xgb_pred, ensemble_pred):
+    """Create comparison bar plot of model predictions"""
+    fig, ax = plt.subplots(figsize=(8, 4))
+    models = ['Random Forest', 'XGBoost', 'Ensemble']
+    values = [rf_pred, xgb_pred, ensemble_pred]
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
+    
+    bars = ax.bar(models, values, color=colors)
+    ax.set_ylabel('Power Output (MW)')
+    ax.set_title('Model Predictions Comparison')
+    
+    # Add value labels on top of bars
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:.2f}',
+                ha='center', va='bottom')
+    
+    return fig
+
+def plot_feature_importance(models, feature_names):
+    """Plot feature importance for both models"""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    
+    # RF Feature Importance
+    rf_importance = models[0].feature_importances_
+    sns.barplot(x=rf_importance, y=feature_names, ax=ax1, palette='Blues_d')
+    ax1.set_title('Random Forest Feature Importance')
+    
+    # XGB Feature Importance
+    xgb_importance = models[1].feature_importances_
+    sns.barplot(x=xgb_importance, y=feature_names, ax=ax2, palette='Oranges_d')
+    ax2.set_title('XGBoost Feature Importance')
+    
+    plt.tight_layout()
+    return fig
 
 # Initialize session state for theme persistence
 if 'dark_mode' not in st.session_state:
@@ -111,36 +175,28 @@ with st.sidebar:
     with st.spinner("Loading models..."):
         rf_model, xgb_model, scaler = load_models()
 
-    # Feature bounds for UI
-    feature_bounds = {
-        'Ambient Temperature': [0.0, 50.0],
-        'Ambient Relative Humidity': [10.0, 100.0],
-        'Ambient Pressure': [799.0, 1035.0],
-        'Exhaust Vacuum': [3.0, 12.0],
-        'Model Weight (RF vs XGB)': [0.0, 1.0]
-    }
-
     # Input sliders
     st.subheader("Input Parameters")
     inputs = {}
-    for feature, (low, high) in feature_bounds.items():
+    for feature, (low, high) in FEATURE_BOUNDS.items():
         default = (low + high) / 2
+        step = 0.1 if feature in ['Ambient Temperature (°C)', 'Model Weight (RF vs XGB)'] else 1.0
         inputs[feature] = st.slider(
-            feature, low, high, default,
+            feature, low, high, default, step,
             help=f"Adjust {feature} between {low} and {high}"
         )
 
     # Reset button
     if st.button("🔄 Reset to Defaults"):
         for feature in inputs:
-            inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
+            inputs[feature] = (FEATURE_BOUNDS[feature][0] + FEATURE_BOUNDS[feature][1]) / 2
 
 # ========== MAIN CONTENT ==========
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
 # Prepare input for prediction
-feature_names = list(feature_bounds.keys())[:-1]  # Exclude weight
+feature_names = list(FEATURE_BOUNDS.keys())[:-1]  # Exclude weight
 input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
 input_weight = inputs['Model Weight (RF vs XGB)']
 
@@ -168,6 +224,16 @@ with col3:
         f"{ensemble_pred:.2f} MW",
         delta=f"{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg"
     )
+
+# Visualizations
+st.subheader("📊 Prediction Visualizations")
+tab1, tab2 = st.tabs(["Prediction Comparison", "Feature Importance"])
+
+with tab1:
+    st.pyplot(plot_predictions_comparison(rf_pred, xgb_pred, ensemble_pred))
+    
+with tab2:
+    st.pyplot(plot_feature_importance([rf_model, xgb_model], feature_names))
 
 # Batch Prediction with CSV Upload
 st.subheader("📂 Batch Prediction")
@@ -199,22 +265,39 @@ if uploaded_file is not None:
         
         with st.expander("View uploaded data"):
             st.dataframe(df.head())
+            st.write(f"Shape: {df.shape}")
+            
+            # Basic statistics
+            st.subheader("Data Statistics")
+            st.dataframe(df.describe())
         
         # Column mapping
         mapped_columns = map_columns(df)
+        st.info(f"Detected columns: {', '.join(mapped_columns.values())}")
+        
         if len(mapped_columns) < 4:
             missing_cols = [col for col in feature_names if col not in mapped_columns]
             st.error(f"Could not find columns for: {', '.join(missing_cols)}")
             st.stop()
             
         df_processed = df.rename(columns=mapped_columns)
-        required_cols = feature_names  # From feature_bounds
+        required_cols = feature_names  # From FEATURE_BOUNDS
         
         # Check for missing columns after mapping
         missing_cols = [col for col in required_cols if col not in df_processed.columns]
         if missing_cols:
             st.error(f"Missing columns after mapping: {', '.join(missing_cols)}")
             st.stop()
+            
+        # Data validation
+        invalid_ranges = []
+        for col, (min_val, max_val) in FEATURE_BOUNDS.items():
+            if col in df_processed.columns:
+                if (df_processed[col] < min_val).any() or (df_processed[col] > max_val).any():
+                    invalid_ranges.append(col)
+        
+        if invalid_ranges:
+            st.warning(f"Values outside expected range detected in: {', '.join(invalid_ranges)}")
             
         # Process data
         with st.spinner("Processing data..."):
@@ -230,14 +313,21 @@ if uploaded_file is not None:
                 results['XGB_Prediction (MW)'] = xgb_preds
                 results['Ensemble_Prediction (MW)'] = final_preds
                 
-                st.success("Predictions completed!")
+                st.success(f"Predictions completed for {len(results)} records!")
                 
                 # Display results
                 st.dataframe(results.style.format({
                     'RF_Prediction (MW)': '{:.2f}',
                     'XGB_Prediction (MW)': '{:.2f}',
                     'Ensemble_Prediction (MW)': '{:.2f}'
-                }))
+                }).background_gradient(cmap='Blues' if st.session_state.dark_mode else 'YlOrBr', subset=['Ensemble_Prediction (MW)']))
+                
+                # Visualize predictions distribution
+                st.subheader("Predictions Distribution")
+                fig, ax = plt.subplots()
+                sns.histplot(results['Ensemble_Prediction (MW)'], kde=True, ax=ax)
+                ax.set_xlabel('Power Output (MW)')
+                st.pyplot(fig)
                 
                 # Download results
                 csv = results.to_csv(index=False).encode()
@@ -257,6 +347,5 @@ if uploaded_file is not None:
 # Footer
 st.markdown("---")
 st.caption("""
-Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
-Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
+Developed with Streamlit | Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
 """.format(input_weight*100, (1-input_weight)*100))
