@@ -90,7 +90,25 @@ def generate_example_csv():
 # Initialize session state for theme persistence
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
-
+# Feature input section with validation
+    st.subheader("🌡️ Input Parameters")
+    for feature, bounds in FEATURE_BOUNDS.items():
+        st.session_state.input_values[feature] = st.number_input(
+            feature,
+            min_value=bounds['min'],
+            max_value=bounds['max'],
+            value=st.session_state.input_values[feature],
+            step=bounds['step'],
+            help=f"Range: {bounds['min']} to {bounds['max']}",
+            key=f"input_{feature}"
+        )
+    
+    # Enhanced reset button
+    if st.button("🔄 Reset All Parameters", use_container_width=True):
+        for feature, bounds in FEATURE_BOUNDS.items():
+            st.session_state.input_values[feature] = bounds['default']
+        st.session_state.model_weights = DEFAULT_WEIGHTS.copy()
+        st.rerun()
 # ========== SIDEBAR ==========
 with st.sidebar:
     st.title("⚙️ CCPP Power Predictor")
