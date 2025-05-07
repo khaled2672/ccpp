@@ -169,6 +169,19 @@ with col3:
         delta=f"{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg"
     )
 
+# Visualization
+st.subheader("📈 Feature Importance")
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+try:
+    rf_importance = pd.Series(rf_model.feature_importances_, index=feature_names)
+    xgb_importance = pd.Series(xgb_model.feature_importances_, index=feature_names)
+    rf_importance.plot(kind='barh', ax=ax1, title='Random Forest', color='#1f77b4')
+    xgb_importance.plot(kind='barh', ax=ax2, title='XGBoost', color='#ff7f0e')
+    fig.tight_layout()
+    st.pyplot(fig)
+except Exception as e:
+    st.warning(f"Could not generate feature importance plots: {str(e)}")
+
 # Batch Prediction with CSV Upload
 st.subheader("📂 Batch Prediction")
 st.markdown("Upload a CSV file with multiple records to get predictions for all of them at once.")
@@ -260,3 +273,15 @@ st.caption("""
 Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
 Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
 """.format(input_weight*100, (1-input_weight)*100))
+# Visualization
+st.subheader("📈 Feature Importance")
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+try:
+    rf_importance = pd.Series(rf_model.feature_importances_, index=feature_names)
+    xgb_importance = pd.Series(xgb_model.feature_importances_, index=feature_names)
+    rf_importance.plot(kind='barh', ax=ax1, title='Random Forest', color='#1f77b4')
+    xgb_importance.plot(kind='barh', ax=ax2, title='XGBoost', color='#ff7f0e')
+    fig.tight_layout()
+    st.pyplot(fig)
+except Exception as e:
+    st.warning(f"Could not generate feature importance plots: {str(e)}")
