@@ -1,4 +1,4 @@
 import joblib
-joblib.dump(tuned_models["Random Forest"], "rf_model.pkl")
-joblib.dump(tuned_models["XGBoost"], "xgb_model.pkl")
-joblib.dump(scaler, "scaler.pkl")
+joblib.dump(tuned_models["Random Forest"], "rf_model.joblib")
+joblib.dump(tuned_models["XGBoost"], "xgb_model.joblib")
+joblib.dump(scaler, "scaler.joblib")
