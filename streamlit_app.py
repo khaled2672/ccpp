@@ -1,6 +1,6 @@
 import streamlit as st
 import numpy as np
-import pandas as pd
+import pandas as p
 import joblib
 import matplotlib.pyplot as plt
 from io import StringIO
