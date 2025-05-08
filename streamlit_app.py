@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://www.google.com/url?sa=i&url=https%3A%2F%2Fchandra-asri.com%2Fen%2Fblog%2Fcombined-cycle-power-plant&psig=AOvVaw04jrlnvLjE6jHBJZooZ4GN&ust=1746770975416000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCKjVq42bk40DFQAAAAAdAAAAABAE");
+                background-image: url("https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
