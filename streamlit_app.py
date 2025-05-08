@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957661.jpg?t=st=1746689038~exp=1746692638~hmac=d9127bb08c95765c9f61bec0ffbec7fec62ff007713625aef76d3392482bddc5&w=1380");
+                background-image: url("https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957630.jpg?t=st=1746689089~exp=1746692689~hmac=15165c0b9a5211f1c6234c9d0de1568c264fac83198ba6c53766f7cacbb3462a&w=1380");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
