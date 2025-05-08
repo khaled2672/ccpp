@@ -5,7 +5,7 @@ import joblib
 import matplotlib.pyplot as plt
 from io import StringIO
 
-# Theme configuration
+# Theme configuration with background images
 def set_theme(dark):
     plt.style.use('dark_background' if dark else 'default')
     if dark:
@@ -13,17 +13,51 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-color: #0e1117;
-                color: #FF0000 ;
+                background-image: url("https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80");
+                background-size: cover;
+                background-attachment: fixed;
+                background-position: center;
+                color: #f1f1f1;
             }
-            .css-1d391kg, .css-1cpxqw2 {
-                color: #FF0000	!important;
+            /* Dark overlay for better readability */
+            .stApp:before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.75);
+                z-index: -1;
             }
-            .css-1v3fvcr {
-                background-color: #FFFF00 !important;
+            /* Main content area */
+            .main .block-container {
+                background-color: rgba(0, 0, 0, 0.7);
+                padding: 2rem;
+                border-radius: 10px;
+                backdrop-filter: blur(4px);
             }
-            .st-b7, .st-b8, .st-b9 {
-                color: #FF0000	 !important;
+            /* Sidebar */
+            [data-testid="stSidebar"] > div:first-child {
+                background-color: rgba(0, 0, 0, 0.8) !important;
+                backdrop-filter: blur(4px);
+            }
+            /* Text colors */
+            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
+                color: #f1f1f1 !important;
+            }
+            /* Widget styling */
+            .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
+                background-color: rgba(30, 30, 30, 0.7) !important;
+            }
+            /* Button styling */
+            .stDownloadButton, .stButton>button {
+                background-color: #4a8af4 !important;
+                color: white !important;
+                border: none !important;
+            }
+            .stDownloadButton:hover, .stButton>button:hover {
+                background-color: #3a7ae4 !important;
             }
             </style>
             """,
@@ -34,8 +68,47 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-color: #ffffff;
-                color: #000000;
+                background-image: url("https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80");
+                background-size: cover;
+                background-attachment: fixed;
+                background-position: center;
+                color: #333333;
+            }
+            /* Light overlay for better readability */
+            .stApp:before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(255, 255, 255, 0.75);
+                z-index: -1;
+            }
+            /* Main content area */
+            .main .block-container {
+                background-color: rgba(255, 255, 255, 0.8);
+                padding: 2rem;
+                border-radius: 10px;
+                backdrop-filter: blur(4px);
+            }
+            /* Sidebar */
+            [data-testid="stSidebar"] > div:first-child {
+                background-color: rgba(255, 255, 255, 0.85) !important;
+                backdrop-filter: blur(4px);
+            }
+            /* Widget styling */
+            .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
+                background-color: rgba(240, 240, 240, 0.8) !important;
+            }
+            /* Button styling */
+            .stDownloadButton, .stButton>button {
+                background-color: #4a8af4 !important;
+                color: white !important;
+                border: none !important;
+            }
+            .stDownloadButton:hover, .stButton>button:hover {
+                background-color: #3a7ae4 !important;
             }
             </style>
             """,
@@ -155,18 +228,57 @@ with st.spinner("Making predictions..."):
         st.error(f"Prediction error: {str(e)}")
         st.stop()
 
-# Display results
+# Display results in cards
 st.subheader("🔢 Model Predictions")
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("Random Forest", f"{rf_pred:.2f} MW", delta_color="off")
+    st.markdown(
+        f"""
+        <div style="
+            background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        ">
+            <h3 style="margin-top: 0;">Random Forest</h3>
+            <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{rf_pred:.2f} MW</h2>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 with col2:
-    st.metric("XGBoost", f"{xgb_pred:.2f} MW", delta_color="off")
+    st.markdown(
+        f"""
+        <div style="
+            background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        ">
+            <h3 style="margin-top: 0;">XGBoost</h3>
+            <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{xgb_pred:.2f} MW</h2>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 with col3:
-    st.metric(
-        f"Ensemble (Weight: {input_weight:.2f})", 
-        f"{ensemble_pred:.2f} MW",
-        delta=f"{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg"
+    st.markdown(
+        f"""
+        <div style="
+            background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        ">
+            <h3 style="margin-top: 0;">Ensemble (Weight: {input_weight:.2f})</h3>
+            <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{ensemble_pred:.2f} MW</h2>
+            <p style="margin-bottom: 0; font-size: 0.9rem;">{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg</p>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
 # Batch Prediction with CSV Upload
@@ -232,12 +344,16 @@ if uploaded_file is not None:
                 
                 st.success("Predictions completed!")
                 
-                # Display results
+                # Display results with conditional formatting
+                def color_positive_green(val):
+                    color = 'green' if val > (rf_preds.mean() + xgb_preds.mean())/2 else 'red'
+                    return f'color: {color}'
+                
                 st.dataframe(results.style.format({
                     'RF_Prediction (MW)': '{:.2f}',
                     'XGB_Prediction (MW)': '{:.2f}',
                     'Ensemble_Prediction (MW)': '{:.2f}'
-                }))
+                }).applymap(color_positive_green, subset=['Ensemble_Prediction (MW)']))
                 
                 # Download results
                 csv = results.to_csv(index=False).encode()
