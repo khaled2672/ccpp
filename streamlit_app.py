@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://www.enka.com/wp-content/uploads/freshizer/015ac6b46b92087855b6591cfe219b8c_IZMIR_010-800-400-c.jpg");
+                background-image: url("file:///C:/Users/hp/Desktop/ccpp/background.jpg");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
