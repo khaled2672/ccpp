@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("file:///C:/Users/hp/Desktop/ccpp/background.jpg");
+                background-image: url("https://temp-pro.com/wp-content/uploads/2024/11/CCPP-1024x575.jpg");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
