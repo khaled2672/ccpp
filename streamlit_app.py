@@ -39,9 +39,8 @@ def set_theme(dark):
             }
             /* Sidebar */
             [data-testid="stSidebar"] > div:first-child {
-                background-color: rgba(0, 0, 0, 0.6) !important;
+                background-color: rgba(0, 0, 0, 0.8) !important;
                 backdrop-filter: blur(4px);
-                color: #ffffff ;
             }
             /* Text colors */
             .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
@@ -69,7 +68,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://www.enka.com/wp-content/uploads/freshizer/015ac6b46b92087855b6591cfe219b8c_IZMIR_010-800-400-c.jpg");
+                background-image: url("https://as2.ftcdn.net/v2/jpg/10/67/71/59/1000_F_1067715939_R2MCQSBY0D8TiOb0KDBfdSBYBG0sN3Hc.jpg");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
