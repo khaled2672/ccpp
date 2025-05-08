@@ -104,11 +104,11 @@ def set_theme(dark):
             /* Button styling */
             .stDownloadButton, .stButton>button {
                 background-color: ##FF0000 !important;
-                color: white !important;
-                border: none !important;
+                color: black !important;
+                border: white !important;
             }
             .stDownloadButton:hover, .stButton>button:hover {
-                background-color: #3a7ae4 !important;
+                background-color: #FFFF00	 !important;
             }
             </style>
             """,
