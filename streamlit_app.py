@@ -54,10 +54,10 @@ def set_theme(dark):
             .stDownloadButton, .stButton>button {
                 background-color: #4a8af4 !important;
                 color: black !important;
-                border: none !important;
+                border: white !important;
             }
             .stDownloadButton:hover, .stButton>button:hover {
-                background-color: #3a7ae4 !important;
+                background-color: #f5f6f7 !important;
             }
             </style>
             """,
@@ -95,6 +95,7 @@ def set_theme(dark):
             /* Sidebar */
             [data-testid="stSidebar"] > div:first-child {
                 background-color: rgba(255, 255, 255, 0.85) !important;
+                color: #333333;
                 backdrop-filter: blur(4px);
             }
             /* Widget styling */
