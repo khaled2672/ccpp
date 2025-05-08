@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://as1.ftcdn.net/v2/jpg/10/41/93/52/1000_F_1041935263_viLUcdJytbjgi9S6BscyJnfIHHyuznS0.jpg");
+                background-image: url("https://as2.ftcdn.net/v2/jpg/10/41/93/49/1000_F_1041934974_svVp8eFvY3tmU2moaBgxwJHGPAW4LtHH.jpg");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
@@ -68,7 +68,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://as2.ftcdn.net/v2/jpg/10/67/71/59/1000_F_1067715939_R2MCQSBY0D8TiOb0KDBfdSBYBG0sN3Hc.jpg");
+                background-image: url("https://as2.ftcdn.net/v2/jpg/10/41/93/49/1000_F_1041934974_svVp8eFvY3tmU2moaBgxwJHGPAW4LtHH.jpg");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
