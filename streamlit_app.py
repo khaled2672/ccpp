@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://pall.scene7.com/is/image/pallcorporation/combined-cycle-power-plant?$OptimizedPNG$");
+                background-image: url("https://media.istockphoto.com/id/2163868131/photo/gas-turbine-electrical-power-plant-at-industrial-estate-business-gas-turbine-electricity.jpg?s=1024x1024&w=is&k=20&c=3QUBbQ5N1SRHdraIQdaSqi-VY4MIoPYagmnZxlSSoUo=");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
