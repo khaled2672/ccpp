@@ -14,16 +14,16 @@ def set_theme(dark):
             <style>
             .stApp {
                 background-color: #0e1117;
-                color: ##900C3F;
+                color: #FF0000;
             }
             .css-1d391kg, .css-1cpxqw2 {
-                color: ##900C3F!important;
+                color: #FF0000	!important;
             }
             .css-1v3fvcr {
                 background-color: #262730 !important;
             }
             .st-b7, .st-b8, .st-b9 {
-                color: ##900C3F !important;
+                color: #FF0000	 !important;
             }
             </style>
             """,
