@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://www.powermag.com/wp-content/uploads/2023/04/fig1-patriot-gas-combined-cycle-power-plant.jpg");
+                background-image: url("https://pall.scene7.com/is/image/pallcorporation/combined-cycle-power-plant?$OptimizedPNG$");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
