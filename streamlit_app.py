@@ -2,51 +2,36 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import joblib
-import matplotlib.pyplot as plt 
-from io import StringIO
+import matplotlib.pyplot as plt
 
-# ========== THEME WITH BACKGROUND IMAGE ==========
+# === Theme and Background ===
 def set_theme(dark):
-    background_image = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fgsdas.com%2Fen%2Fenergy-industrial-contract-epc%2Fenergy-contracting%2Fcombined-cycle-power-plants-ccpp%2F&psig=AOvVaw3TApUOO5YPkMfWz-g5tAY_&ust=1746769745508000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCOi9o8SWk40DFQAAAAAdAAAAABAE"  # Replace with a full URL if using hosted image
+    background_url = "https://images.unsplash.com/photo-1581090700227-1e8eaff7ef72"  # Replace with your own hosted image URL if needed
+    text_color = "#f1f1f1" if dark else "#000000"
+    bg_color = "#0e1117" if dark else "#ffffff"
 
-    common_style = f"""
-        <style>
-        .stApp {{
-            background: url("{background_image}") no-repeat center center fixed;
-            background-size: cover;
-        }}
-        </style>
+    background_style = f"""
+    <style>
+    .stApp {{
+        background-image: url('{background_url}');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-position: center;
+        color: {text_color};
+    }}
+    .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {{
+        color: {text_color} !important;
+    }}
+    .css-1v3fvcr {{
+        background-color: {'#262730' if dark else '#f0f2f6'} !important;
+    }}
+    </style>
     """
+    st.markdown(background_style, unsafe_allow_html=True)
+    plt.style.use('dark_background' if dark else 'default')
 
-    if dark:
-        dark_style = """
-            <style>
-            .stApp {{
-                color: #f1f1f1;
-            }}
-            .css-1d391kg, .css-1cpxqw2 {{
-                color: #f1f1f1 !important;
-            }}
-            .css-1v3fvcr {{
-                background-color: #262730 !important;
-            }}
-            .st-b7, .st-b8, .st-b9 {{
-                color: #f1f1f1 !important;
-            }}
-            </style>
-        """
-        st.markdown(common_style + dark_style, unsafe_allow_html=True)
-    else:
-        light_style = """
-            <style>
-            .stApp {{
-                color: #000000;
-            }}
-            </style>
-        """
-        st.markdown(common_style + light_style, unsafe_allow_html=True)
-
-# ========== CACHED RESOURCES ==========
+# === Model Loading ===
 @st.cache_resource
 def load_models():
     try:
@@ -59,6 +44,7 @@ def load_models():
         st.error(f"Error loading models: {str(e)}")
         st.stop()
 
+# === Generate Example CSV ===
 @st.cache_data
 def generate_example_csv():
     example_data = {
@@ -69,6 +55,7 @@ def generate_example_csv():
     }
     return pd.DataFrame(example_data).to_csv(index=False)
 
+# === Column Mapping ===
 def map_columns(df):
     column_mapping = {
         "Ambient Temperature (°C)": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature", "AT"],
@@ -76,7 +63,6 @@ def map_columns(df):
         "Ambient Pressure (mbar)": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP"],
         "Exhaust Vacuum (cmHg)": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "EV"]
     }
-
     mapped_columns = {}
     for target, possible_names in column_mapping.items():
         for name in possible_names:
@@ -85,14 +71,13 @@ def map_columns(df):
                 break
     return mapped_columns
 
-# ========== SESSION STATE INIT ==========
+# === Session Initialization ===
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
-# ========== SIDEBAR ==========
+# === SIDEBAR ===
 with st.sidebar:
     st.title("⚙️ CCPP Power Predictor")
-    
     st.session_state.dark_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
     set_theme(st.session_state.dark_mode)
 
@@ -128,10 +113,11 @@ with st.sidebar:
         for feature in inputs:
             inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
-# ========== MAIN CONTENT ==========
+# === MAIN CONTENT ===
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
+# === Prediction Logic ===
 feature_names = list(feature_bounds.keys())[:-1]
 input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
 input_weight = inputs['Model Weight (RF vs XGB)']
@@ -146,20 +132,21 @@ with st.spinner("Making predictions..."):
         st.error(f"Prediction error: {str(e)}")
         st.stop()
 
+# === Display Results ===
 st.subheader("🔢 Model Predictions")
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("Random Forest", f"{rf_pred:.2f} MW", delta_color="off")
+    st.metric("Random Forest", f"{rf_pred:.2f} MW")
 with col2:
-    st.metric("XGBoost", f"{xgb_pred:.2f} MW", delta_color="off")
+    st.metric("XGBoost", f"{xgb_pred:.2f} MW")
 with col3:
     st.metric(
-        f"Ensemble (Weight: {input_weight:.2f})", 
+        f"Ensemble (Weight: {input_weight:.2f})",
         f"{ensemble_pred:.2f} MW",
         delta=f"{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg"
     )
 
-# ========== BATCH PREDICTION ==========
+# === Batch Prediction ===
 st.subheader("📂 Batch Prediction")
 st.markdown("Upload a CSV file with multiple records to get predictions for all of them at once.")
 
@@ -171,7 +158,11 @@ st.download_button(
     help="Example file with the expected format"
 )
 
-uploaded_file = st.file_uploader("Upload your input data (CSV format)", type=["csv"])
+uploaded_file = st.file_uploader(
+    "Upload your input data (CSV format)",
+    type=["csv"],
+    help="CSV should contain columns for temperature, humidity, pressure, and vacuum"
+)
 
 if uploaded_file is not None:
     try:
@@ -179,19 +170,19 @@ if uploaded_file is not None:
         if df.empty:
             st.error("Uploaded file is empty")
             st.stop()
+
         st.success("File uploaded successfully!")
         with st.expander("View uploaded data"):
             st.dataframe(df.head())
-        
+
         mapped_columns = map_columns(df)
         if len(mapped_columns) < 4:
             missing_cols = [col for col in feature_names if col not in mapped_columns]
             st.error(f"Could not find columns for: {', '.join(missing_cols)}")
             st.stop()
-        
+
         df_processed = df.rename(columns=mapped_columns)
         required_cols = feature_names
-        
         missing_cols = [col for col in required_cols if col not in df_processed.columns]
         if missing_cols:
             st.error(f"Missing columns after mapping: {', '.join(missing_cols)}")
@@ -216,14 +207,18 @@ if uploaded_file is not None:
                 'Ensemble_Prediction (MW)': '{:.2f}'
             }))
 
-            csv = results.to_csv(index=False).encode()
-            st.download_button("⬇️ Download Full Results", data=csv, file_name="ccpp_predictions.csv", mime="text/csv")
+            st.download_button(
+                "⬇️ Download Full Results",
+                data=results.to_csv(index=False).encode(),
+                file_name="ccpp_predictions.csv",
+                mime="text/csv"
+            )
     except Exception as e:
         st.error(f"Error processing file: {str(e)}")
 
-# ========== FOOTER ==========
+# === Footer ===
 st.markdown("---")
-st.caption("""
+st.caption(f"""
 Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
-Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
-""".format(input_weight*100, (1-input_weight)*100))
+Model weights: Random Forest ({input_weight*100:.0f}%), XGBoost ({(1-input_weight)*100:.0f}%)
+""")
