@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://www.powermag.com/wp-content/uploads/2017/09/splash_edf-bouchain-combined-cycle-power-plant_web.jpg");
+                background-image: url("https://www.power-eng.com/wp-content/uploads/2020/01/Termocandalaria.jpg");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
