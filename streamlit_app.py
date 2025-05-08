@@ -44,7 +44,7 @@ def set_theme(dark):
             }
             /* Text colors */
             .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
-                color: #f1f1f1 !important;
+                color: #FF0000 !important;
             }
             /* Widget styling */
             .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
