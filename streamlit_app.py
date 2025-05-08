@@ -7,7 +7,7 @@ from io import StringIO
 
 # ========== THEME WITH BACKGROUND IMAGE ==========
 def set_theme(dark):
-    background_image = "background.jpg"  # Replace with a full URL if using hosted image
+    background_image = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fgsdas.com%2Fen%2Fenergy-industrial-contract-epc%2Fenergy-contracting%2Fcombined-cycle-power-plants-ccpp%2F&psig=AOvVaw3TApUOO5YPkMfWz-g5tAY_&ust=1746769745508000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCOi9o8SWk40DFQAAAAAdAAAAABAE"  # Replace with a full URL if using hosted image
 
     common_style = f"""
         <style>
