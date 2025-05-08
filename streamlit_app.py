@@ -14,7 +14,7 @@ def set_theme(dark):
             <style>
             .stApp {
                 background-color: #0e1117;
-                color: #FF0000;
+                color: #FF0000 ;
             }
             .css-1d391kg, .css-1cpxqw2 {
                 color: #FF0000	!important;
