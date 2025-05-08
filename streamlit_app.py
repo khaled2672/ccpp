@@ -103,7 +103,7 @@ def set_theme(dark):
             }
             /* Button styling */
             .stDownloadButton, .stButton>button {
-                background-color: #4a8af4 !important;
+                background-color: ##FF0000 !important;
                 color: white !important;
                 border: none !important;
             }
