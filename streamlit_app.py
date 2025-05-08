@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://cdn3.tim-europe.com/websites/pcne/typo3temp/assets/_processed_/7/b/csm_46711__Siemens_6154aeb491.jpg");
+                background-image: url("https://as2.ftcdn.net/v2/jpg/10/67/71/59/1000_F_1067715939_R2MCQSBY0D8TiOb0KDBfdSBYBG0sN3Hc.jpg");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
