@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://www.power-eng.com/wp-content/uploads/2020/01/Termocandalaria.jpg");
+                background-image: url("https://cdn3.tim-europe.com/websites/pcne/typo3temp/assets/_processed_/7/b/csm_46711__Siemens_6154aeb491.jpg");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
