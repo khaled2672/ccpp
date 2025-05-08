@@ -82,12 +82,12 @@ def set_theme(dark):
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background-color: rgba(255, 255, 255, 0.75);
+                background-color: rgbrgb(205, 92, 92);
                 z-index: -1;
             }
             /* Main content area */
             .main .block-container {
-                background-color: rgba(255, 255, 255, 0.8);
+                background-color: rgb(205, 92, 92);
                 padding: 2rem;
                 border-radius: 10px;
                 backdrop-filter: blur(4px);
@@ -103,12 +103,12 @@ def set_theme(dark):
             }
             /* Button styling */
             .stDownloadButton, .stButton>button {
-                background-color: ##FF0000 !important;
+                background-color: #FFFF00	 !important;
                 color: black !important;
                 border: white !important;
             }
             .stDownloadButton:hover, .stButton>button:hover {
-                background-color: #FFFF00	 !important;
+                background-color: #FF0000	 !important;
             }
             </style>
             """,
