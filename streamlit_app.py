@@ -11,9 +11,8 @@ def set_theme(dark):
     plt.style.use('dark_background' if dark else 'default')
     
     # Background images (replace with your own image URLs or paths)
-    light_bg = "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1952&q=80"
-    dark_bg = "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?ixlib=rb-1.2.1&auto=format&fit=crop&w=1951&q=80"
-    
+    light_bg = "https://github.com/khaled2672/ccpp/blob/eb75c8fd7ba745173ae56b088ee81cef8ef191b0/background.jpg"
+    dark_bg = "https://github.com/khaled2672/ccpp/blob/eb75c8fd7ba745173ae56b088ee81cef8ef191b0/background.jpg"
     try:
         if dark:
             st.markdown(
