@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://as2.ftcdn.net/v2/jpg/04/78/62/19/1000_F_478621953_so91ZGAvDyVIruURjPcOjovxC9RYvGBp.jpg");
+                background-image: url("https://as2.ftcdn.net/v2/jpg/10/67/71/59/1000_F_1067715973_5mfUY61CUGEsNkBKStPuD34pQ8Mklaf1.jpg");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
