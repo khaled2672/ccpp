@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # === Theme and Background ===
 def set_theme(dark):
-    background_url = "https://images.unsplash.com/photo-1581090700227-1e8eaff7ef72"  # Replace with your own hosted image URL if needed
+    background_url = "background.jpg"  # Replace with your own hosted image URL if needed
     text_color = "#f1f1f1" if dark else "#000000"
     bg_color = "#0e1117" if dark else "#ffffff"
 
