@@ -20,7 +20,7 @@ def set_theme(dark):
                 color: #FF0000	!important;
             }
             .css-1v3fvcr {
-                background-color: #262730 !important;
+                background-color: #FFFF00 !important;
             }
             .st-b7, .st-b8, .st-b9 {
                 color: #FF0000	 !important;
