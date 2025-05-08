@@ -4,7 +4,78 @@ import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 from io import StringIO
-
+# Add this to your theme configuration function
+def set_theme(dark):
+    plt.style.use('dark_background' if dark else 'default')
+    if dark:
+        st.markdown(
+            """
+            <style>
+            .stApp {
+                background-image: url("https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80");
+                background-size: cover;
+                background-attachment: fixed;
+                color: #f1f1f1;
+            }
+            /* Add a semi-transparent overlay to make text more readable */
+            .stApp:before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.7);
+                z-index: -1;
+            }
+            .main .block-container {
+                background-color: rgba(0, 0, 0, 0.7);
+                padding: 2rem;
+                border-radius: 10px;
+            }
+            .css-1d391kg, .css-1cpxqw2 {
+                color: #f1f1f1 !important;
+            }
+            .css-1v3fvcr {
+                background-color: #262730 !important;
+            }
+            .st-b7, .st-b8, .st-b9 {
+                color: #f1f1f1 !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            """
+            <style>
+            .stApp {
+                background-image: url("https://images.unsplash.com/photo-1497366754035-f200968a6e72?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80");
+                background-size: cover;
+                background-attachment: fixed;
+                color: #000000;
+            }
+            /* Add a semi-transparent overlay to make text more readable */
+            .stApp:before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(255, 255, 255, 0.7);
+                z-index: -1;
+            }
+            .main .block-container {
+                background-color: rgba(255, 255, 255, 0.7);
+                padding: 2rem;
+                border-radius: 10px;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
 # Theme configuration
 def set_theme(dark):
     plt.style.use('dark_background' if dark else 'default')
