@@ -57,7 +57,7 @@ def set_theme(dark):
                 border: none !important;
             }
             .stDownloadButton:hover, .stButton>button:hover {
-                background-color: #3a7ae4 !important;
+                background-color: #FF0000 !important;
             }
             </style>
             """,
