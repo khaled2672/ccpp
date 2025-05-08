@@ -41,7 +41,7 @@ def set_theme(dark):
             [data-testid="stSidebar"] > div:first-child {
                 background-color: rgba(255, 0, 0, 0.2) !important;
                 backdrop-filter: blur(4px);
-                color: #000000;
+                color: #ffffff ;
             }
             /* Text colors */
             .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
