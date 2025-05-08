@@ -95,7 +95,7 @@ def set_theme(dark):
             /* Sidebar */
             [data-testid="stSidebar"] > div:first-child {
                 background-color: rgba(255, 255, 255, 0.85) !important;
-                color: #333333;
+                color: #333333 ;
                 backdrop-filter: blur(4px);
             }
             /* Widget styling */
