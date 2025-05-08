@@ -98,6 +98,10 @@ def set_theme(dark):
                 background-color: rgba(255, 255, 255, 0.85) !important
                 backdrop-filter: blur(4px);
             }
+            /* Text colors */
+            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
+                color: #ffffff !important;
+            }
             /* Widget styling */
             .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
                 background-color: rgba(240, 240, 240, 0.8) !important;
