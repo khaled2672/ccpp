@@ -68,7 +68,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80");
+                background-image: url("https://www.enka.com/wp-content/uploads/freshizer/015ac6b46b92087855b6591cfe219b8c_IZMIR_010-800-400-c.jpg");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
