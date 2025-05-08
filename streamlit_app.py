@@ -13,7 +13,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url("https://temp-pro.com/wp-content/uploads/2024/11/CCPP-1024x575.jpg");
+                background-image: url("https://www.powermag.com/wp-content/uploads/2023/04/fig1-patriot-gas-combined-cycle-power-plant.jpg");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
