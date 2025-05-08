@@ -39,7 +39,7 @@ def set_theme(dark):
             }
             /* Sidebar */
             [data-testid="stSidebar"] > div:first-child {
-                background-color: rgba(255, 0, 0, 0.2) !important;
+                background-color: rgba(0, 0, 0, 0.6) !important;
                 backdrop-filter: blur(4px);
                 color: #000000 ;
             }
