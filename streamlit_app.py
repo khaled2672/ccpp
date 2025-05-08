@@ -34,7 +34,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-color: #ffffff;
+                background-color: #FF0000;
                 color: #000000;
             }
             </style>
