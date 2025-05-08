@@ -17,7 +17,7 @@ def set_theme(dark):
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
-                color: #000000;
+                color: #FF0000;
             }
             /* Dark overlay for better readability */
             .stApp:before {
