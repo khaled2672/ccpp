@@ -40,6 +40,7 @@ def set_theme(dark):
             /* Sidebar */
             [data-testid="stSidebar"] > div:first-child {
                 background-color: rgba(0, 0, 0, 0.8) !important;
+                color: #ffffff ;
                 backdrop-filter: blur(4px);
             }
             /* Text colors */
@@ -94,8 +95,7 @@ def set_theme(dark):
             }
             /* Sidebar */
             [data-testid="stSidebar"] > div:first-child {
-                background-color: rgba(255, 255, 255, 0.85) !important;
-                color: #ffffff ;
+                background-color: rgba(255, 255, 255, 0.85) !important
                 backdrop-filter: blur(4px);
             }
             /* Widget styling */
