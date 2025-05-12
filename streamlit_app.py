@@ -19,7 +19,6 @@ def set_theme(dark):
                 background-position: center;
                 color: #f1f1f1;
             }
-            /* Dark overlay for better readability */
             .stApp:before {
                 content: "";
                 position: absolute;
@@ -30,28 +29,23 @@ def set_theme(dark):
                 background-color: rgba(0, 0, 0, 0.75);
                 z-index: -1;
             }
-            /* Main content area */
             .main .block-container {
                 background-color: rgba(0, 0, 0, 0.7);
                 padding: 2rem;
                 border-radius: 10px;
                 backdrop-filter: blur(4px);
             }
-            /* Sidebar */
             [data-testid="stSidebar"] > div:first-child {
                 background-color: rgba(0, 0, 0, 0.8) !important;
                 color: #ffffff ;
                 backdrop-filter: blur(4px);
             }
-            /* Text colors */
             .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
                 color: #f1f1f1 !important;
             }
-            /* Widget styling */
             .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
                 background-color: rgba(30, 30, 30, 0.7) !important;
             }
-            /* Button styling */
             .stDownloadButton, .stButton>button {
                 background-color: #4a8af4 !important;
                 color: black !important;
@@ -75,7 +69,6 @@ def set_theme(dark):
                 background-position: center;
                 color: #333333;
             }
-            /* Light overlay for better readability */
             .stApp:before {
                 content: "";
                 position: absolute;
@@ -86,27 +79,22 @@ def set_theme(dark):
                 background-color: rgba(255, 255, 255, 0.75);
                 z-index: -1;
             }
-            /* Main content area */
             .main .block-container {
                 background-color: rgba(255, 255, 255, 0.8);
                 padding: 2rem;
                 border-radius: 10px;
                 backdrop-filter: blur(4px);
             }
-            /* Sidebar */
             [data-testid="stSidebar"] > div:first-child {
                 background-color: rgba(255, 255, 255, 0.85) !important
                 backdrop-filter: blur(4px);
             }
-            /* Text colors */
             .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
                 color: #ffffff !important;
             }
-            /* Widget styling */
             .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
                 background-color: rgba(240, 240, 240, 0.8) !important;
             }
-            /* Button styling */
             .stDownloadButton, .stButton>button {
                 background-color: #4a8af4 !important;
                 color: white !important;
@@ -153,23 +141,8 @@ def map_columns(df):
 
     return mapped_columns
 
-# Generate example CSV data
-@st.cache_data
-def generate_example_csv():
-    """Generate example CSV data for download"""
-    example_data = {
-        "Temperature (°C)": [25.0, 30.0, 27.5],
-        "Humidity (%)": [60.0, 65.0, 62.5],
-        "Pressure (mbar)": [1010.0, 1005.0, 1007.5],
-        "Vacuum (cmHg)": [5.0, 6.0, 5.5]
-    }
-    return pd.DataFrame(example_data).to_csv(index=False)
-
-# Initialize session state for theme persistence
-if 'dark_mode' not in st.session_state:
-    st.session_state.dark_mode = False
-
 # ========== SIDEBAR ==========
+
 with st.sidebar:
     st.title("⚙️ CCPP Power Predictor")
     
@@ -214,6 +187,7 @@ with st.sidebar:
             inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
 # ========== MAIN CONTENT ==========
+
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
@@ -294,90 +268,17 @@ st.markdown("Upload a CSV file with multiple records to get predictions for all 
 st.download_button(
     "⬇️ Download Example CSV",
     data=generate_example_csv(),
-    file_name="ccpp_example_input.csv",
-    mime="text/csv",
-    help="Example file with the expected format"
+    file_name="example_data.csv",
+    mime="text/csv"
 )
 
-uploaded_file = st.file_uploader(
-    "Upload your input data (CSV format)", 
-    type=["csv"],
-    help="CSV should contain columns for temperature, humidity, pressure, and vacuum"
-)
-
+uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
 if uploaded_file is not None:
-    try:
-        df = pd.read_csv(uploaded_file)
-        if df.empty:
-            st.error("Uploaded file is empty")
-            st.stop()
-            
-        st.success("File uploaded successfully!")
-        
-        with st.expander("View uploaded data"):
-            st.dataframe(df.head())
-        
-        # Column mapping
-        mapped_columns = map_columns(df)
-        if len(mapped_columns) < 4:
-            missing_cols = [col for col in feature_names if col not in mapped_columns]
-            st.error(f"Could not find columns for: {', '.join(missing_cols)}")
-            st.stop()
-            
-        df_processed = df.rename(columns=mapped_columns)
-        required_cols = feature_names  # From feature_bounds
-        
-        # Check for missing columns after mapping
-        missing_cols = [col for col in required_cols if col not in df_processed.columns]
-        if missing_cols:
-            st.error(f"Missing columns after mapping: {', '.join(missing_cols)}")
-            st.stop()
-            
-        # Process data
-        with st.spinner("Processing data..."):
-            features = df_processed[required_cols]
-            try:
-                scaled = scaler.transform(features)
-                rf_preds = rf_model.predict(scaled)
-                xgb_preds = xgb_model.predict(scaled)
-                final_preds = input_weight * rf_preds + (1 - input_weight) * xgb_preds
-                
-                results = df_processed.copy()
-                results['RF_Prediction (MW)'] = rf_preds
-                results['XGB_Prediction (MW)'] = xgb_preds
-                results['Ensemble_Prediction (MW)'] = final_preds
-                
-                st.success("Predictions completed!")
-                
-                # Display results with conditional formatting
-                def color_positive_green(val):
-                    color = 'green' if val > (rf_preds.mean() + xgb_preds.mean())/2 else 'red'
-                    return f'color: {color}'
-                
-                st.dataframe(results.style.format({
-                    'RF_Prediction (MW)': '{:.2f}',
-                    'XGB_Prediction (MW)': '{:.2f}',
-                    'Ensemble_Prediction (MW)': '{:.2f}'
-                }).applymap(color_positive_green, subset=['Ensemble_Prediction (MW)']))
-                
-                # Download results
-                csv = results.to_csv(index=False).encode()
-                st.download_button(
-                    "⬇️ Download Full Results",
-                    data=csv,
-                    file_name="ccpp_predictions.csv",
-                    mime="text/csv"
-                )
-                
-            except Exception as e:
-                st.error(f"Error during prediction: {str(e)}")
-                
-    except Exception as e:
-        st.error(f"Error processing file: {str(e)}")
-
-# Footer
-st.markdown("---")
-st.caption("""
-Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
-Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
-""".format(input_weight*100, (1-input_weight)*100))
+    df = pd.read_csv(uploaded_file)
+    mapped_columns = map_columns(df)
+    
+    if mapped_columns:
+        df['Prediction'] = df.apply(lambda row: weighted_prediction(row, rf_model, xgb_model, scaler, input_weight), axis=1)
+        st.write(df)  
+    else:
+        st.error("Columns in the CSV do not match the expected format.")
