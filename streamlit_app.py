@@ -8,8 +8,7 @@ from io import StringIO
 # Theme configuration with background images
 def set\_theme(dark):
   plt.style.use('dark\_background' if dark else 'default')
-if dark:
-st.markdown(
+if dark:st.markdown(
 """ <style>
 .stApp {
 background-image: url("[https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process\_23-2150957658.jpg?t=st=1746689462\~exp=1746693062\~hmac=71da5c1edb4e4c2bd79eda912f889934c4d11e1aeea35a5106d1bd18e53a89b4\&w=1380](https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg?t=st=1746689462~exp=1746693062~hmac=71da5c1edb4e4c2bd79eda912f889934c4d11e1aeea35a5106d1bd18e53a89b4&w=1380)");
