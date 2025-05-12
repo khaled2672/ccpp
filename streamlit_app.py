@@ -214,7 +214,7 @@ st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
 # Prepare input for prediction
-feature_names = list(inputs.keys())
+feature_names = list(inputs.keys())[:4]  # Make sure only the first 4 features are passed
 input_data = np.array([inputs[feature] for feature in feature_names]).reshape(1, -1)
 
 # Predict using both models
@@ -237,7 +237,7 @@ if uploaded_file is not None:
         mapped_columns = map_columns(df)
         df = df.rename(columns=mapped_columns)
 
-        # Scaling and prediction for the CSV
+        # Ensure we only use the 4 expected features
         features = df[list(mapped_columns.keys())].values
         features_scaled = scaler.transform(features)
 
