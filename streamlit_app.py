@@ -35,7 +35,7 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-image: url('https://your-light-background-image-url-here');
+                background-image: url('https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process/_23-2150957658.jpg');
                 background-size: cover;
                 background-position: center center;
                 color: #000000;
