@@ -179,6 +179,7 @@ with st.sidebar:
     2. View the predicted power output  
     3. Compare models using the toggle  
     4. Upload CSV for batch predictions
+    5. best 0.65 RF / 0.35 XGB
     """)
 
     # Load models
@@ -363,5 +364,4 @@ st.markdown("---")
 st.caption("""
 Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)
 Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
-best 0.65 RF / 0.35 XGB
 """.format(input_weight*100, (1-input_weight)*100))
