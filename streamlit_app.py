@@ -7,7 +7,7 @@ from io import StringIO
 
 # Theme configuration with background images
 
-def set\_theme(dark):
+def set_theme(dark):
 plt.style.use('dark\_background' if dark else 'default')
 if dark:
 st.markdown(
