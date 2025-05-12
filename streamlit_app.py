@@ -5,21 +5,23 @@ import joblib
 import matplotlib.pyplot as plt
 from io import StringIO
 
-# Theme configuration with custom background
+# Theme configuration with custom background image
 def set_theme(dark):
     if dark:
         st.markdown(
             """
             <style>
             .stApp {
-                background: linear-gradient(135deg, #0e1117, #20232a);
+                background-image: url('https://your-dark-background-image-url-here');
+                background-size: cover;
+                background-position: center center;
                 color: #f1f1f1;
             }
             .css-1d391kg, .css-1cpxqw2 {
                 color: #f1f1f1 !important;
             }
             .css-1v3fvcr {
-                background-color: #262730 !important;
+                background-color: rgba(38, 39, 48, 0.8) !important;
             }
             .st-b7, .st-b8, .st-b9 {
                 color: #f1f1f1 !important;
@@ -33,8 +35,19 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background: linear-gradient(135deg, #ffffff, #f1f1f1);
+                background-image: url('https://your-light-background-image-url-here');
+                background-size: cover;
+                background-position: center center;
                 color: #000000;
+            }
+            .css-1d391kg, .css-1cpxqw2 {
+                color: #000000 !important;
+            }
+            .css-1v3fvcr {
+                background-color: rgba(255, 255, 255, 0.8) !important;
+            }
+            .st-b7, .st-b8, .st-b9 {
+                color: #000000 !important;
             }
             </style>
             """,
