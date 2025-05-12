@@ -122,8 +122,8 @@ def load_models():
     """Load models and scaler with caching"""
     try:
         return (
-            joblib.load('rf_model.pkl'),
-            joblib.load('xgb_model.pkl'),
+            joblib.load('rf_model.joblib'),
+            joblib.load('xgb_model.joblib'),
             joblib.load('standard_scaler.pkl')
         )
     except Exception as e:
