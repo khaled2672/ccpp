@@ -5,7 +5,7 @@ import joblib
 import matplotlib.pyplot as plt
 from io import StringIO
 
-# Theme configuration
+# Theme configuration with background images
 def set_theme(dark):
     plt.style.use('dark_background' if dark else 'default')
     if dark:
@@ -13,17 +13,46 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-color: #0e1117;
+                background-image: url("https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg?t=st=1746689462~exp=1746693062~hmac=71da5c1edb4e4c2bd79eda912f889934c4d11e1aeea35a5106d1bd18e53a89b4&w=1380");
+                background-size: cover;
+                background-attachment: fixed;
+                background-position: center;
                 color: #f1f1f1;
             }
-            .css-1d391kg, .css-1cpxqw2 {
+            .stApp:before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.75);
+                z-index: -1;
+            }
+            .main .block-container {
+                background-color: rgba(0, 0, 0, 0.7);
+                padding: 2rem;
+                border-radius: 10px;
+                backdrop-filter: blur(4px);
+            }
+            [data-testid="stSidebar"] > div:first-child {
+                background-color: rgba(0, 0, 0, 0.8) !important;
+                color: #ffffff ;
+                backdrop-filter: blur(4px);
+            }
+            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
                 color: #f1f1f1 !important;
             }
-            .css-1v3fvcr {
-                background-color: #262730 !important;
+            .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
+                background-color: rgba(30, 30, 30, 0.7) !important;
             }
-            .st-b7, .st-b8, .st-b9 {
-                color: #f1f1f1 !important;
+            .stDownloadButton, .stButton>button {
+                background-color: #4a8af4 !important;
+                color: black !important;
+                border: white !important;
+            }
+            .stDownloadButton:hover, .stButton>button:hover {
+                background-color: #f5f6f7 !important;
             }
             </style>
             """,
@@ -34,8 +63,45 @@ def set_theme(dark):
             """
             <style>
             .stApp {
-                background-color: #ffffff;
-                color: #000000;
+                background-image: url("https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg?t=st=1746689462~exp=1746693062~hmac=71da5c1edb4e4c2bd79eda912f889934c4d11e1aeea35a5106d1bd18e53a89b4&w=1380");
+                background-size: cover;
+                background-attachment: fixed;
+                background-position: center;
+                color: #333333;
+            }
+            .stApp:before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(255, 255, 255, 0.75);
+                z-index: -1;
+            }
+            .main .block-container {
+                background-color: rgba(255, 255, 255, 0.8);
+                padding: 2rem;
+                border-radius: 10px;
+                backdrop-filter: blur(4px);
+            }
+            [data-testid="stSidebar"] > div:first-child {
+                background-color: rgba(255, 255, 255, 0.85) !important
+                backdrop-filter: blur(4px);
+            }
+            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
+                color: #ffffff !important;
+            }
+            .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
+                background-color: rgba(240, 240, 240, 0.8) !important;
+            }
+            .stDownloadButton, .stButton>button {
+                background-color: #4a8af4 !important;
+                color: white !important;
+                border: none !important;
+            }
+            .stDownloadButton:hover, .stButton>button:hover {
+                background-color: #3a7ae4 !important;
             }
             </style>
             """,
@@ -75,23 +141,8 @@ def map_columns(df):
 
     return mapped_columns
 
-# Generate example CSV data
-@st.cache_data
-def generate_example_csv():
-    """Generate example CSV data for download"""
-    example_data = {
-        "Temperature (°C)": [25.0, 30.0, 27.5],
-        "Humidity (%)": [60.0, 65.0, 62.5],
-        "Pressure (mbar)": [1010.0, 1005.0, 1007.5],
-        "Vacuum (cmHg)": [5.0, 6.0, 5.5]
-    }
-    return pd.DataFrame(example_data).to_csv(index=False)
-
-# Initialize session state for theme persistence
-if 'dark_mode' not in st.session_state:
-    st.session_state.dark_mode = False
-
 # ========== SIDEBAR ==========
+
 with st.sidebar:
     st.title("⚙️ CCPP Power Predictor")
     
@@ -136,6 +187,7 @@ with st.sidebar:
             inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
 # ========== MAIN CONTENT ==========
+
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
@@ -155,18 +207,57 @@ with st.spinner("Making predictions..."):
         st.error(f"Prediction error: {str(e)}")
         st.stop()
 
-# Display results
+# Display results in cards
 st.subheader("🔢 Model Predictions")
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("Random Forest", f"{rf_pred:.2f} MW", delta_color="off")
+    st.markdown(
+        f"""
+        <div style="
+            background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        ">
+            <h3 style="margin-top: 0;">Random Forest</h3>
+            <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{rf_pred:.2f} MW</h2>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 with col2:
-    st.metric("XGBoost", f"{xgb_pred:.2f} MW", delta_color="off")
+    st.markdown(
+        f"""
+        <div style="
+            background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        ">
+            <h3 style="margin-top: 0;">XGBoost</h3>
+            <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{xgb_pred:.2f} MW</h2>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 with col3:
-    st.metric(
-        f"Ensemble (Weight: {input_weight:.2f})", 
-        f"{ensemble_pred:.2f} MW",
-        delta=f"{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg"
+    st.markdown(
+        f"""
+        <div style="
+            background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        ">
+            <h3 style="margin-top: 0;">Ensemble (Weight: {input_weight:.2f})</h3>
+            <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{ensemble_pred:.2f} MW</h2>
+            <p style="margin-bottom: 0; font-size: 0.9rem;">{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg</p>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
 # Batch Prediction with CSV Upload
@@ -177,86 +268,17 @@ st.markdown("Upload a CSV file with multiple records to get predictions for all 
 st.download_button(
     "⬇️ Download Example CSV",
     data=generate_example_csv(),
-    file_name="ccpp_example_input.csv",
-    mime="text/csv",
-    help="Example file with the expected format"
+    file_name="example_data.csv",
+    mime="text/csv"
 )
 
-uploaded_file = st.file_uploader(
-    "Upload your input data (CSV format)", 
-    type=["csv"],
-    help="CSV should contain columns for temperature, humidity, pressure, and vacuum"
-)
-
+uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
 if uploaded_file is not None:
-    try:
-        df = pd.read_csv(uploaded_file)
-        if df.empty:
-            st.error("Uploaded file is empty")
-            st.stop()
-            
-        st.success("File uploaded successfully!")
-        
-        with st.expander("View uploaded data"):
-            st.dataframe(df.head())
-        
-        # Column mapping
-        mapped_columns = map_columns(df)
-        if len(mapped_columns) < 4:
-            missing_cols = [col for col in feature_names if col not in mapped_columns]
-            st.error(f"Could not find columns for: {', '.join(missing_cols)}")
-            st.stop()
-            
-        df_processed = df.rename(columns=mapped_columns)
-        required_cols = feature_names  # From feature_bounds
-        
-        # Check for missing columns after mapping
-        missing_cols = [col for col in required_cols if col not in df_processed.columns]
-        if missing_cols:
-            st.error(f"Missing columns after mapping: {', '.join(missing_cols)}")
-            st.stop()
-            
-        # Process data
-        with st.spinner("Processing data..."):
-            features = df_processed[required_cols]
-            try:
-                scaled = scaler.transform(features)
-                rf_preds = rf_model.predict(scaled)
-                xgb_preds = xgb_model.predict(scaled)
-                final_preds = input_weight * rf_preds + (1 - input_weight) * xgb_preds
-                
-                results = df_processed.copy()
-                results['RF_Prediction (MW)'] = rf_preds
-                results['XGB_Prediction (MW)'] = xgb_preds
-                results['Ensemble_Prediction (MW)'] = final_preds
-                
-                st.success("Predictions completed!")
-                
-                # Display results
-                st.dataframe(results.style.format({
-                    'RF_Prediction (MW)': '{:.2f}',
-                    'XGB_Prediction (MW)': '{:.2f}',
-                    'Ensemble_Prediction (MW)': '{:.2f}'
-                }))
-                
-                # Download results
-                csv = results.to_csv(index=False).encode()
-                st.download_button(
-                    "⬇️ Download Full Results",
-                    data=csv,
-                    file_name="ccpp_predictions.csv",
-                    mime="text/csv"
-                )
-                
-            except Exception as e:
-                st.error(f"Error during prediction: {str(e)}")
-                
-    except Exception as e:
-        st.error(f"Error processing file: {str(e)}")
-
-# Footer
-st.markdown("---")
-st.caption("""
-Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
-Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
-""".format(input_weight*100, (1-input_weight)*100))
+    df = pd.read_csv(uploaded_file)
+    mapped_columns = map_columns(df)
+    
+    if mapped_columns:
+        df['Prediction'] = df.apply(lambda row: weighted_prediction(row, rf_model, xgb_model, scaler, input_weight), axis=1)
+        st.write(df)  
+    else:
+        st.error("Columns in the CSV do not match the expected format.")
