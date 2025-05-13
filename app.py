@@ -1,3 +1,4 @@
+python -c "from pyswarms.single.global_best import GlobalBestPSO; print('PSO is ready')"
 import streamlit as st
 import pandas as pd
 import numpy as np
