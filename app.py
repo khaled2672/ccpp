@@ -9,15 +9,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 
-# Check if pyswarms is installed, and if not, install it
+# Try to import pyswarms and inform the user if it's not installed
 try:
     import pyswarms
+    pso_installed = True
 except ModuleNotFoundError:
-    st.error("`pyswarms` is not installed. Installing it now...")
-    # Attempting to install the pyswarms package
-    import os
-    os.system("pip install pyswarms")
-    st.success("`pyswarms` installed successfully. Please refresh the page.")
+    pso_installed = False
+    st.error("`pyswarms` module is not installed. Please install it to run PSO optimization.")
 
 # Load models and transformers
 try:
@@ -90,52 +88,57 @@ with tabs[1]:
             st.error(f"Processing failed: {str(e)}")
 
 # === PSO Optimization ===
-st.subheader("🧠 Optimal Conditions via PSO")
-st.markdown("Find ambient settings that **maximize** predicted power output using Particle Swarm Optimization.")
+if pso_installed:
+    st.subheader("🧠 Optimal Conditions via PSO")
+    st.markdown("Find ambient settings that **maximize** predicted power output using Particle Swarm Optimization.")
 
-# Define bounds
-pso_bounds = {
-    'Ambient Temperature': [15.0, 35.0],
-    'Ambient Relative Humidity': [20.0, 80.0],
-    'Ambient Pressure': [798.0, 802.0],
-    'Exhaust Vacuum': [3.5, 7.0],
-}
-lb = np.array([v[0] for v in pso_bounds.values()])
-ub = np.array([v[1] for v in pso_bounds.values()])
-pso_feature_names = list(pso_bounds.keys())
+    # Define bounds
+    pso_bounds = {
+        'Ambient Temperature': [15.0, 35.0],
+        'Ambient Relative Humidity': [20.0, 80.0],
+        'Ambient Pressure': [798.0, 802.0],
+        'Exhaust Vacuum': [3.5, 7.0],
+    }
+    lb = np.array([v[0] for v in pso_bounds.values()])
+    ub = np.array([v[1] for v in pso_bounds.values()])
+    pso_feature_names = list(pso_bounds.keys())
 
-def objective_function(x):
-    preds = []
-    for row in x:
-        raw = row.reshape(1, -1)
-        poly_f = poly.transform(raw)
-        minmax_f = minmax_scaler.transform(poly_f)
-        final_f = standard_scaler.transform(minmax_f)
-        rf = rf_model.predict(final_f)[0]
-        xgb = xgb_model.predict(final_f)[0]
-        y = best_weight * rf + (1 - best_weight) * xgb
-        preds.append(-y)  # Negative for maximization
-    return np.array(preds)
+    def objective_function(x):
+        preds = []
+        for row in x:
+            raw = row.reshape(1, -1)
+            poly_f = poly.transform(raw)
+            minmax_f = minmax_scaler.transform(poly_f)
+            final_f = standard_scaler.transform(minmax_f)
+            rf = rf_model.predict(final_f)[0]
+            xgb = xgb_model.predict(final_f)[0]
+            y = best_weight * rf + (1 - best_weight) * xgb
+            preds.append(-y)  # Negative for maximization
+        return np.array(preds)
 
-if st.button("🚀 Run PSO to Optimize"):
-    with st.spinner("Running Particle Swarm Optimization..."):
-        optimizer = GlobalBestPSO(
-            n_particles=30,
-            dimensions=len(lb),
-            options={'c1': 0.5, 'c2': 0.3, 'w': 0.9},
-            bounds=(lb, ub)
-        )
-        cost, pos = optimizer.optimize(objective_function, iters=100)
+    if st.button("🚀 Run PSO to Optimize"):
+        with st.spinner("Running Particle Swarm Optimization..."):
+            from pyswarms.single.global_best import GlobalBestPSO
+            optimizer = GlobalBestPSO(
+                n_particles=30,
+                dimensions=len(lb),
+                options={'c1': 0.5, 'c2': 0.3, 'w': 0.9},
+                bounds=(lb, ub)
+            )
+            cost, pos = optimizer.optimize(objective_function, iters=100)
 
-        # Final prediction
-        poly_f = poly.transform(pos.reshape(1, -1))
-        minmax_f = minmax_scaler.transform(poly_f)
-        final_f = standard_scaler.transform(minmax_f)
-        rf = rf_model.predict(final_f)[0]
-        xgb = xgb_model.predict(final_f)[0]
-        max_power = best_weight * rf + (1 - best_weight) * xgb
+            # Final prediction
+            poly_f = poly.transform(pos.reshape(1, -1))
+            minmax_f = minmax_scaler.transform(poly_f)
+            final_f = standard_scaler.transform(minmax_f)
+            rf = rf_model.predict(final_f)[0]
+            xgb = xgb_model.predict(final_f)[0]
+            max_power = best_weight * rf + (1 - best_weight) * xgb
 
-    st.success(f"🎯 Optimal Power Output: {max_power:.2f} MW")
-    st.markdown("### 🌡️ Optimal Ambient Settings")
-    for k, v in zip(pso_feature_names, pos):
-        st.markdown(f"**{k}**: {v:.2f}")
+        st.success(f"🎯 Optimal Power Output: {max_power:.2f} MW")
+        st.markdown("### 🌡️ Optimal Ambient Settings")
+        for k, v in zip(pso_feature_names, pos):
+            st.markdown(f"**{k}**: {v:.2f}")
+
+else:
+    st.warning("PSO optimization requires the `pyswarms` library to function. Please install it.")
