@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
-from pyswarms.single.global_best import GlobalBestPSO
 
 # Check if pyswarms is installed, and if not, install it
 try:
