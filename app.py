@@ -158,3 +158,4 @@ with tabs[2]:
                 opt_df = pd.DataFrame([pos], columns=pso_features).T
                 opt_df.columns = ["Optimal Value"]
                 st.table(opt_df)
+ 
