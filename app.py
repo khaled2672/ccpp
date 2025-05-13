@@ -1,21 +1,20 @@
 import streamlit as st
 
-# Set page config - this must be the very first Streamlit command
+# Set page config - must be the first Streamlit command
 st.set_page_config(page_title="Gas Turbine Power Prediction", layout="wide")
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import joblib
 
-# Try to import pyswarms and inform the user if it's not installed
+# Try to import pyswarms
 try:
     import pyswarms
+    from pyswarms.single.global_best import GlobalBestPSO
     pso_installed = True
 except ModuleNotFoundError:
     pso_installed = False
-    st.error("`pyswarms` module is not installed. Please install it to run PSO optimization.")
+    st.error("⚠️ `pyswarms` is not installed. PSO optimization will be unavailable.")
 
 # Load models and transformers
 try:
@@ -26,7 +25,7 @@ try:
     poly = joblib.load("poly_transformer.joblib")
     best_weight = joblib.load("best_ensemble_weight.joblib")
 except Exception as e:
-    st.error(f"Model/component loading failed: {str(e)}")
+    st.error(f"❌ Model/component loading failed: {str(e)}")
     st.stop()
 
 # Title
@@ -60,15 +59,36 @@ with tabs[0]:
 # === Tab 2: Batch Prediction ===
 with tabs[1]:
     st.subheader("Upload CSV with Sensor Data")
-    st.markdown("CSV must contain columns: **T, RH, AP, V** (in that order)")
+    st.markdown("CSV must include ambient features. Acceptable column names include variations of **T, RH, AP, V**.")
+
+    # Define possible alternative names for each feature
+    column_mappings = {
+        "T": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature", "AT", "T"],
+        "RH": ["Relative Humidity", "Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH"],
+        "AP": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP"],
+        "V": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "EV", "V"],
+    }
+
+    def map_columns(df):
+        """Rename columns to standard keys T, RH, AP, V"""
+        new_cols = {}
+        for std_col, aliases in column_mappings.items():
+            for alias in aliases:
+                if alias in df.columns:
+                    new_cols[alias] = std_col
+                    break
+        df = df.rename(columns=new_cols)
+        return df
 
     uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
     if uploaded_file is not None:
         try:
             df = pd.read_csv(uploaded_file)
+            df = map_columns(df)
+
             required_cols = ["T", "RH", "AP", "V"]
             if not all(col in df.columns for col in required_cols):
-                st.error("CSV must contain columns: T, RH, AP, V")
+                st.error("CSV must contain columns for T, RH, AP, V (or acceptable alternatives).")
             else:
                 features = df[required_cols].values
                 poly_features = poly.transform(features)
@@ -85,7 +105,7 @@ with tabs[1]:
                 csv = df.to_csv(index=False).encode("utf-8")
                 st.download_button("📥 Download Predictions", data=csv, file_name="predictions.csv", mime="text/csv")
         except Exception as e:
-            st.error(f"Processing failed: {str(e)}")
+            st.error(f"❌ Processing failed: {str(e)}")
 
 # === PSO Optimization ===
 if pso_installed:
@@ -94,10 +114,10 @@ if pso_installed:
 
     # Define bounds
     pso_bounds = {
-        'Ambient Temperature': [15.0, 50.0],
+        'Ambient Temperature': [15.0, 35.0],
         'Ambient Relative Humidity': [20.0, 80.0],
         'Ambient Pressure': [798.0, 802.0],
-        'Exhaust Vacuum': [3.0, 12.0],
+        'Exhaust Vacuum': [3.5, 7.0],
     }
     lb = np.array([v[0] for v in pso_bounds.values()])
     ub = np.array([v[1] for v in pso_bounds.values()])
@@ -113,12 +133,11 @@ if pso_installed:
             rf = rf_model.predict(final_f)[0]
             xgb = xgb_model.predict(final_f)[0]
             y = best_weight * rf + (1 - best_weight) * xgb
-            preds.append(-y)  # Negative for maximization
+            preds.append(-y)  # Maximize
         return np.array(preds)
 
     if st.button("🚀 Run PSO to Optimize"):
         with st.spinner("Running Particle Swarm Optimization..."):
-            from pyswarms.single.global_best import GlobalBestPSO
             optimizer = GlobalBestPSO(
                 n_particles=30,
                 dimensions=len(lb),
@@ -139,6 +158,5 @@ if pso_installed:
         st.markdown("### 🌡️ Optimal Ambient Settings")
         for k, v in zip(pso_feature_names, pos):
             st.markdown(f"**{k}**: {v:.2f}")
-
 else:
-    st.warning("PSO optimization requires the `pyswarms` library to function. Please install it.")
+    st.warning("⚠️ PSO optimization requires the `pyswarms` package. Please install it to enable this feature.")
