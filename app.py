@@ -3,12 +3,19 @@ import pandas as pd
 import numpy as np
 import joblib
 
-# Page config
+# Set page config
 st.set_page_config(page_title="Gas Turbine Power Prediction", layout="wide")
-st.title("🔋 Combined Cycle Power Plant Predictor")
-st.markdown("Predict power output from ambient sensor inputs and optimize operating conditions.")
 
-# === Load models and transformers ===
+# Try to import pyswarms
+try:
+    import pyswarms
+    from pyswarms.single.global_best import GlobalBestPSO
+    pso_installed = True
+except ModuleNotFoundError:
+    pso_installed = False
+    st.error("⚠️ `pyswarms` is not installed. PSO optimization will be unavailable.")
+
+# Load models and transformers
 try:
     rf_model = joblib.load("random_forest_model.joblib")
     xgb_model = joblib.load("xgboost_model.joblib")
@@ -20,70 +27,54 @@ except Exception as e:
     st.error(f"❌ Model/component loading failed: {str(e)}")
     st.stop()
 
-# === Check PSO availability ===
-try:
-    from pyswarms.single.global_best import GlobalBestPSO
-    pso_installed = True
-except ModuleNotFoundError:
-    pso_installed = False
-    st.warning("⚠️ `pyswarms` is not installed. Optimization will be unavailable.")
+st.title("🔋 Combined Cycle Power Plant Predictor")
+st.markdown("Predict power output from ambient sensor inputs and optimize operating conditions.")
 
-# === Helper functions ===
+tabs = st.tabs(["🔍 Single Prediction", "📂 Predict from CSV"])
+
+# === Helper for preprocessing ===
 def preprocess_input(features):
     poly_features = poly.transform(features)
     scaled = minmax_scaler.transform(poly_features)
     return standard_scaler.transform(scaled)
 
-def predict_models(input_array):
-    rf = rf_model.predict(input_array)[0]
-    xgb = xgb_model.predict(input_array)[0]
-    ensemble = best_weight * rf + (1 - best_weight) * xgb
-    return rf, xgb, ensemble
-
-# === Tabs ===
-tabs = st.tabs(["🔍 Single Prediction", "📂 Predict from CSV", "🧠 Optimize with PSO"])
-
-# === Tab 1: Manual Input ===
+# === Tab 1: Manual input ===
 with tabs[0]:
-    st.subheader("Manual Sensor Input")
-    col1, col2 = st.columns(2)
-    with col1:
-        T = st.number_input("🌡️ Ambient Temperature (°C)", 0.0, 50.0, 25.0)
-        AP = st.number_input("🌬️ Ambient Pressure (mbar)", 500.0, 1100.0, 1010.0)
-    with col2:
-        RH = st.number_input("💧 Relative Humidity (%)", 0.0, 100.0, 60.0)
-        EV = st.number_input("🌪️ Exhaust Vacuum (cm Hg)", 0.0, 10.0, 4.5)
+    st.subheader("Input Ambient Sensor Readings")
 
-    if st.button("⚡ Predict Power Output"):
+    T = st.number_input("Ambient Temperature (°C)", min_value=0.0, max_value=50.0, value=25.0)
+    RH = st.number_input("Ambient Relative Humidity (%)", min_value=0.0, max_value=100.0, value=60.0)
+    AP = st.number_input("Ambient Pressure (mbar)", min_value=500.0, max_value=1100.0, value=1010.0)
+    EV = st.number_input("Exhaust Vacuum (cm Hg)", min_value=0.0, max_value=10.0, value=4.5)
+
+    if st.button("Predict Power Output"):
         features = np.array([[T, RH, AP, EV]])
         final_input = preprocess_input(features)
-        rf_pred, xgb_pred, ensemble_pred = predict_models(final_input)
 
-        st.markdown("### 📊 Prediction Results")
-        pred_df = pd.DataFrame({
-            "Model": ["Random Forest", "XGBoost", "Ensemble"],
-            "Power Output (MW)": [rf_pred, xgb_pred, ensemble_pred]
-        })
-        st.table(pred_df)
+        rf_pred = rf_model.predict(final_input)[0]
+        xgb_pred = xgb_model.predict(final_input)[0]
+        ensemble_pred = best_weight * rf_pred + (1 - best_weight) * xgb_pred
+
+        st.success(f"🔋 Predicted Power Output: {ensemble_pred:.2f} MW")
 
 # === Tab 2: CSV Upload ===
 with tabs[1]:
     st.subheader("Batch Prediction from CSV")
-    st.markdown("CSV must include T, RH, AP, V columns (or common name variations).")
+    st.markdown("Upload a CSV file containing ambient conditions. Required columns (with flexible naming):")
 
     column_mappings = {
-        "T": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "AT", "T"],
-        "RH": ["Relative Humidity", "Humidity", "RH"],
-        "AP": ["Ambient Pressure", "Pressure", "AP"],
-        "V": ["Exhaust Vacuum", "Vacuum", "EV", "V"]
+        "T": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature", "AT", "T"],
+        "RH": ["Relative Humidity", "Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH"],
+        "AP": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP"],
+        "V": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "EV", "V"],
     }
 
     def map_columns(df):
         rename_map = {}
-        for std_col, aliases in column_mappings.items():
+        for standard, aliases in column_mappings.items():
             for alias in aliases:
                 if alias in df.columns:
-                    rename_map[alias] = std_col
+                    rename_map[alias] = standard
                     break
         return df.rename(columns=rename_map)
 
@@ -94,11 +85,12 @@ with tabs[1]:
             df = map_columns(df)
             required_cols = ["T", "RH", "AP", "V"]
 
-            if not all(col in df.columns for col in required_cols):
-                st.error("Missing required columns: T, RH, AP, V.")
+            missing_cols = [col for col in required_cols if col not in df.columns]
+            if missing_cols:
+                st.error(f"❌ Missing required columns after mapping: {', '.join(missing_cols)}")
             else:
                 if df[required_cols].isnull().sum().sum() > 0:
-                    st.warning("Missing values detected. Dropping affected rows.")
+                    st.warning("⚠️ Missing values detected. Dropping rows with missing data.")
                     df.dropna(subset=required_cols, inplace=True)
 
                 inputs = preprocess_input(df[required_cols].values)
@@ -114,48 +106,49 @@ with tabs[1]:
         except Exception as e:
             st.error(f"❌ Error processing file: {str(e)}")
 
-# === Tab 3: PSO Optimization ===
-with tabs[2]:
-    if not pso_installed:
-        st.warning("⚠️ Install `pyswarms` to enable optimization.")
-    else:
-        st.subheader("🧠 Particle Swarm Optimization")
-        st.markdown("Find optimal ambient conditions to **maximize** power output.")
+# === PSO Optimization ===
+if pso_installed:
+    st.subheader("🧠 Optimal Conditions via PSO")
+    st.markdown("Find ambient settings that **maximize** predicted power output using Particle Swarm Optimization.")
 
-        pso_bounds = {
-            "Ambient Temperature": [15.0, 35.0],
-            "Relative Humidity": [20.0, 80.0],
-            "Ambient Pressure": [798.0, 802.0],
-            "Exhaust Vacuum": [3.5, 7.0],
-        }
+    pso_bounds = {
+        'Ambient Temperature': [15.0, 35.0],
+        'Ambient Relative Humidity': [20.0, 80.0],
+        'Ambient Pressure': [798.0, 802.0],
+        'Exhaust Vacuum': [3.5, 7.0],
+    }
+    lb = np.array([v[0] for v in pso_bounds.values()])
+    ub = np.array([v[1] for v in pso_bounds.values()])
+    pso_feature_names = list(pso_bounds.keys())
 
-        lb = np.array([v[0] for v in pso_bounds.values()])
-        ub = np.array([v[1] for v in pso_bounds.values()])
-        pso_features = list(pso_bounds.keys())
+    def objective_function(x):
+        preds = []
+        for row in x:
+            final_input = preprocess_input(row.reshape(1, -1))
+            rf = rf_model.predict(final_input)[0]
+            xgb = xgb_model.predict(final_input)[0]
+            y = best_weight * rf + (1 - best_weight) * xgb
+            preds.append(-y)
+        return np.array(preds)
 
-        def objective(x):
-            preds = []
-            for row in x:
-                inp = preprocess_input(row.reshape(1, -1))
-                _, _, ensemble = predict_models(inp)
-                preds.append(-ensemble)
-            return np.array(preds)
+    if st.button("🚀 Run PSO to Optimize"):
+        with st.spinner("Running Particle Swarm Optimization..."):
+            optimizer = GlobalBestPSO(
+                n_particles=30,
+                dimensions=len(lb),
+                options={'c1': 0.5, 'c2': 0.3, 'w': 0.9},
+                bounds=(lb, ub)
+            )
+            cost, pos = optimizer.optimize(objective_function, iters=100)
 
-        if st.button("🚀 Optimize Conditions"):
-            with st.spinner("Running optimization..."):
-                optimizer = GlobalBestPSO(
-                    n_particles=30, dimensions=len(lb),
-                    options={"c1": 0.5, "c2": 0.3, "w": 0.9},
-                    bounds=(lb, ub)
-                )
-                cost, pos = optimizer.optimize(objective, iters=100)
+            final_input = preprocess_input(pos.reshape(1, -1))
+            rf = rf_model.predict(final_input)[0]
+            xgb = xgb_model.predict(final_input)[0]
+            max_power = best_weight * rf + (1 - best_weight) * xgb
 
-                inp = preprocess_input(pos.reshape(1, -1))
-                rf, xgb, ensemble = predict_models(inp)
-
-                st.success(f"🎯 Optimized Power Output: {ensemble:.2f} MW")
-                st.markdown("### 🌡️ Optimal Ambient Settings")
-                opt_df = pd.DataFrame([pos], columns=pso_features).T
-                opt_df.columns = ["Optimal Value"]
-                st.table(opt_df)
- 
+        st.success(f"🎯 Optimal Power Output: {max_power:.2f} MW")
+        st.markdown("### 🌡️ Optimal Ambient Settings")
+        for k, v in zip(pso_feature_names, pos):
+            st.markdown(f"**{k}**: {v:.2f}")
+else:
+    st.warning("⚠️ PSO optimization requires the `pyswarms` package. Please install it to enable this feature.")
