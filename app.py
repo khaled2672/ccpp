@@ -4,7 +4,6 @@ import numpy as np
 import joblib
 from pyswarms.single.global_best import GlobalBestPSO
 
-# Page config
 st.set_page_config(page_title="Gas Turbine Power Prediction", layout="wide")
 
 # Load models and transformers
