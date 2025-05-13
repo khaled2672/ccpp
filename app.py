@@ -1,6 +1,6 @@
 import streamlit as st
 
-# Set page config - must be the first Streamlit command
+# Set page config
 st.set_page_config(page_title="Gas Turbine Power Prediction", layout="wide")
 
 import pandas as pd
@@ -28,14 +28,12 @@ except Exception as e:
     st.error(f"❌ Model/component loading failed: {str(e)}")
     st.stop()
 
-# Title
 st.title("⚡ Gas Turbine Power Output Prediction")
 st.markdown("Predict power output from ambient sensor inputs and optimize operating conditions.")
 
-# Tabs
 tabs = st.tabs(["🔍 Single Prediction", "📂 Predict from CSV"])
 
-# === Tab 1: Single Prediction ===
+# === Tab 1: Manual input ===
 with tabs[0]:
     st.subheader("Input Ambient Sensor Readings")
 
@@ -56,12 +54,12 @@ with tabs[0]:
 
         st.success(f"🔋 Predicted Power Output: {ensemble_pred:.2f} MW")
 
-# === Tab 2: Batch Prediction ===
+# === Tab 2: CSV Upload ===
 with tabs[1]:
     st.subheader("Upload CSV with Sensor Data")
     st.markdown("CSV must include ambient features. Acceptable column names include variations of **T, RH, AP, V**.")
 
-    # Define possible alternative names for each feature
+    # Alternative column names
     column_mappings = {
         "T": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature", "AT", "T"],
         "RH": ["Relative Humidity", "Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH"],
@@ -70,15 +68,13 @@ with tabs[1]:
     }
 
     def map_columns(df):
-        """Rename columns to standard keys T, RH, AP, V"""
-        new_cols = {}
+        rename_map = {}
         for std_col, aliases in column_mappings.items():
             for alias in aliases:
                 if alias in df.columns:
-                    new_cols[alias] = std_col
+                    rename_map[alias] = std_col
                     break
-        df = df.rename(columns=new_cols)
-        return df
+        return df.rename(columns=rename_map)
 
     uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
     if uploaded_file is not None:
@@ -88,8 +84,14 @@ with tabs[1]:
 
             required_cols = ["T", "RH", "AP", "V"]
             if not all(col in df.columns for col in required_cols):
-                st.error("CSV must contain columns for T, RH, AP, V (or acceptable alternatives).")
+                st.error("CSV must contain T, RH, AP, V (or common variations).")
             else:
+                # Handle missing values
+                missing_rows = df[required_cols].isnull().sum().sum()
+                if missing_rows > 0:
+                    st.warning(f"⚠️ Detected {missing_rows} missing values. Rows with missing data will be dropped.")
+                    df = df.dropna(subset=required_cols)
+
                 features = df[required_cols].values
                 poly_features = poly.transform(features)
                 scaled = minmax_scaler.transform(poly_features)
@@ -112,7 +114,6 @@ if pso_installed:
     st.subheader("🧠 Optimal Conditions via PSO")
     st.markdown("Find ambient settings that **maximize** predicted power output using Particle Swarm Optimization.")
 
-    # Define bounds
     pso_bounds = {
         'Ambient Temperature': [15.0, 35.0],
         'Ambient Relative Humidity': [20.0, 80.0],
@@ -133,7 +134,7 @@ if pso_installed:
             rf = rf_model.predict(final_f)[0]
             xgb = xgb_model.predict(final_f)[0]
             y = best_weight * rf + (1 - best_weight) * xgb
-            preds.append(-y)  # Maximize
+            preds.append(-y)
         return np.array(preds)
 
     if st.button("🚀 Run PSO to Optimize"):
@@ -146,7 +147,6 @@ if pso_installed:
             )
             cost, pos = optimizer.optimize(objective_function, iters=100)
 
-            # Final prediction
             poly_f = poly.transform(pos.reshape(1, -1))
             minmax_f = minmax_scaler.transform(poly_f)
             final_f = standard_scaler.transform(minmax_f)
