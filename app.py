@@ -1,1 +1,136 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import joblib
+from pyswarms.single.global_best import GlobalBestPSO
+
+# Page configuration
+st.set_page_config(page_title="Gas Turbine Power Prediction", layout="wide")
+
+# Load pre-trained models and components
+try:
+    rf_model = joblib.load("rf_model.joblib")
+    xgb_model = joblib.load("xgb_model.joblib")
+    scaler = joblib.load("scaler.joblib")
+    poly = joblib.load("poly_transformer.joblib")
+    minmax_scaler = joblib.load("minmax_scaler.joblib")
+    standard_scaler = joblib.load("standard_scaler.joblib")
+    best_weight = joblib.load("best_ensemble_weight.joblib")
+except Exception as e:
+    st.error(f"Error loading model components: {str(e)}")
+    st.stop()
+
+# UI - Title
+st.title("⚡ Gas Turbine Power Output Prediction")
+st.markdown("Predict power output from ambient sensor inputs and optimize operating conditions.")
+
+# Tabs: Single Prediction and CSV Upload
+tabs = st.tabs(["🔍 Single Prediction", "📂 Predict from CSV"])
+
+# --- Tab 1: Single Input Prediction ---
+with tabs[0]:
+    st.subheader("Input Ambient Sensor Readings")
+
+    T = st.number_input("Ambient Temperature (T, °C)", min_value=0.0, max_value=50.0, value=25.0)
+    RH = st.number_input("Ambient Relative Humidity (RH, %)", min_value=0.0, max_value=100.0, value=60.0)
+    AP = st.number_input("Ambient Pressure (AP, mbar)", min_value=500.0, max_value=1100.0, value=1010.0)
+    EV = st.number_input("Exhaust Vacuum (V, cm Hg)", min_value=0.0, max_value=10.0, value=4.5)
+
+    if st.button("Predict Power Output"):
+        features = np.array([[T, RH, AP, EV]])
+        poly_features = poly.transform(features)
+        scaled = minmax_scaler.transform(poly_features)
+        final_input = standard_scaler.transform(scaled)
+
+        rf_pred = rf_model.predict(final_input)[0]
+        xgb_pred = xgb_model.predict(final_input)[0]
+        ensemble_pred = best_weight * rf_pred + (1 - best_weight) * xgb_pred
+
+        st.success(f"🔋 Predicted Power Output: {ensemble_pred:.2f} MW")
+
+# --- Tab 2: CSV Upload Prediction ---
+with tabs[1]:
+    st.subheader("Upload CSV with Sensor Data")
+    st.markdown("CSV must contain columns: T, RH, AP, V")
+
+    uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+    if uploaded_file is not None:
+        try:
+            df = pd.read_csv(uploaded_file)
+            required_cols = ["T", "RH", "AP", "V"]
+            if not all(col in df.columns for col in required_cols):
+                st.error("CSV must contain columns: T, RH, AP, V")
+            else:
+                features = df[required_cols].values
+                poly_features = poly.transform(features)
+                scaled = minmax_scaler.transform(poly_features)
+                final_input = standard_scaler.transform(scaled)
+
+                rf_preds = rf_model.predict(final_input)
+                xgb_preds = xgb_model.predict(final_input)
+                ensemble_preds = best_weight * rf_preds + (1 - best_weight) * xgb_preds
+
+                df["Predicted Power (MW)"] = ensemble_preds
+
+                st.dataframe(df)
+
+                csv = df.to_csv(index=False).encode("utf-8")
+                st.download_button("Download Predictions", data=csv, file_name="predictions.csv", mime="text/csv")
+        except Exception as e:
+            st.error(f"Error processing file: {str(e)}")
+
+# ==================== PSO Optimization Section ====================
+st.subheader("🧠 Optimal Conditions (PSO)")
+st.markdown("Find the optimal plant input settings that maximize predicted power output using Particle Swarm Optimization (PSO).")
+
+# Define PSO bounds
+pso_bounds = {
+    'Ambient Temperature': [15.0, 35.0],
+    'Ambient Relative Humidity': [20.0, 80.0],
+    'Ambient Pressure': [798.0, 802.0],
+    'Exhaust Vacuum': [3.5, 7.0],
+}
+lb = np.array([v[0] for v in pso_bounds.values()])
+ub = np.array([v[1] for v in pso_bounds.values()])
+pso_feature_names = list(pso_bounds.keys())
+
+# PSO objective function
+def objective_function(x):
+    preds = []
+    for row in x:
+        raw = row.reshape(1, -1)
+        poly_f = poly.transform(raw)
+        minmax_f = minmax_scaler.transform(poly_f)
+        final_f = standard_scaler.transform(minmax_f)
+        rf = rf_model.predict(final_f)[0]
+        xgb = xgb_model.predict(final_f)[0]
+        y = best_weight * rf + (1 - best_weight) * xgb
+        preds.append(-y)  # negative for maximization
+    return np.array(preds)
+
+if st.button("🚀 Run PSO to Optimize"):
+    with st.spinner("Running PSO..."):
+        optimizer = GlobalBestPSO(
+            n_particles=30,
+            dimensions=len(lb),
+            options={'c1': 0.5, 'c2': 0.3, 'w': 0.9},
+            bounds=(lb, ub)
+        )
+        cost, pos = optimizer.optimize(objective_function, iters=100)
+
+        # Final prediction from optimal inputs
+        poly_f = poly.transform(pos.reshape(1, -1))
+        minmax_f = minmax_scaler.transform(poly_f)
+        final_f = standard_scaler.transform(minmax_f)
+        rf = rf_model.predict(final_f)[0]
+        xgb = xgb_model.predict(final_f)[0]
+        max_power = best_weight * rf + (1 - best_weight) * xgb
+
+    # Display optimal result
+    st.success(f"🎯 Optimal Power Output: {max_power:.2f} MW")
+    st.markdown("### 🌡️ Optimal Ambient Settings")
+    for k, v in zip(pso_feature_names, pos):
+        st.markdown(f"**{k}**: {v:.2f}")
 
