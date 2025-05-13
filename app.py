@@ -94,10 +94,10 @@ if pso_installed:
 
     # Define bounds
     pso_bounds = {
-        'Ambient Temperature': [15.0, 35.0],
+        'Ambient Temperature': [15.0, 50.0],
         'Ambient Relative Humidity': [20.0, 80.0],
         'Ambient Pressure': [798.0, 802.0],
-        'Exhaust Vacuum': [3.5, 7.0],
+        'Exhaust Vacuum': [3.0, 12.0],
     }
     lb = np.array([v[0] for v in pso_bounds.values()])
     ub = np.array([v[1] for v in pso_bounds.values()])
