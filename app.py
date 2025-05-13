@@ -1,9 +1,14 @@
 import streamlit as st
+
+# Set page config - this must be the very first Streamlit command
+st.set_page_config(page_title="Gas Turbine Power Prediction", layout="wide")
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
+from pyswarms.single.global_best import GlobalBestPSO
 
 # Check if pyswarms is installed, and if not, install it
 try:
@@ -14,9 +19,6 @@ except ModuleNotFoundError:
     import os
     os.system("pip install pyswarms")
     st.success("`pyswarms` installed successfully. Please refresh the page.")
-
-# Page config
-st.set_page_config(page_title="Gas Turbine Power Prediction", layout="wide")
 
 # Load models and transformers
 try:
