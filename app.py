@@ -28,7 +28,7 @@ except Exception as e:
     st.error(f"❌ Model/component loading failed: {str(e)}")
     st.stop()
 
-st.title("⚡ Gas Turbine Power Output Prediction")
+st.title("⚡🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output from ambient sensor inputs and optimize operating conditions.")
 
 tabs = st.tabs(["🔍 Single Prediction", "📂 Predict from CSV"])
