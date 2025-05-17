@@ -5,7 +5,7 @@ import joblib
 import matplotlib.pyplot as plt
 from io import StringIO
 
-# Theme configuration with background images
+# Updated Theme configuration with blue color scheme
 def set_theme(dark):
     plt.style.use('dark_background' if dark else 'default')
     if dark:
@@ -16,9 +16,9 @@ def set_theme(dark):
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
-                color: #f1f1f1;
+                color: #ffffff;
             }
-            /* Dark overlay for better readability */
+            /* Dark blue overlay */
             .stApp:before {
                 content: "";
                 position: absolute;
@@ -26,38 +26,48 @@ def set_theme(dark):
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background-color: rgba(0, 0, 0, 0.75);
+                background-color: rgba(0, 30, 60, 0.85);
                 z-index: -1;
             }
-            /* Main content area */
+            /* Main content area - dark blue */
             .main .block-container {
-                background-color: rgba(0, 0, 0, 0.7);
+                background-color: rgba(10, 40, 80, 0.9);
                 padding: 2rem;
                 border-radius: 10px;
                 backdrop-filter: blur(4px);
+                border: 1px solid #2a6fdb;
             }
-            /* Sidebar */
+            /* Sidebar - darker blue */
             [data-testid="stSidebar"] > div:first-child {
-                background-color: rgba(0, 0, 0, 0.8) !important;
+                background-color: rgba(15, 45, 90, 0.95) !important;
                 color: #ffffff;
                 backdrop-filter: blur(4px);
-            }
-            /* Text colors */
-            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
-                color: #f1f1f1 !important;
+                border-right: 1px solid #2a6fdb;
             }
             /* Widget styling */
             .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
-                background-color: rgba(30, 30, 30, 0.7) !important;
+                background-color: rgba(20, 50, 100, 0.8) !important;
+                border: 1px solid #3a7ae4;
             }
             /* Button styling */
             .stDownloadButton, .stButton>button {
-                background-color: #4a8af4 !important;
-                color: black !important;
-                border: white !important;
+                background-color: #2a6fdb !important;
+                color: white !important;
+                border: none !important;
             }
             .stDownloadButton:hover, .stButton>button:hover {
-                background-color: #f5f6f7 !important;
+                background-color: #3a7ae4 !important;
+            }
+            /* Text colors */
+            h1, h2, h3, h4, h5, h6 {
+                color: #a8d0ff !important;
+            }
+            /* Slider colors */
+            .st-bw {
+                background-color: #3a7ae4 !important;
+            }
+            .st-bx {
+                background-color: #2a6fdb !important;
             } </style>
             """,
             unsafe_allow_html=True
@@ -72,7 +82,7 @@ def set_theme(dark):
                 background-position: center;
                 color: #333333;
             }
-            /* Light overlay for better readability */
+            /* Light blue overlay */
             .stApp:before {
                 content: "";
                 position: absolute;
@@ -80,37 +90,47 @@ def set_theme(dark):
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background-color: rgba(255, 255, 255, 0.75);
+                background-color: rgba(220, 240, 255, 0.85);
                 z-index: -1;
             }
-            /* Main content area */
+            /* Main content area - very light blue */
             .main .block-container {
-                background-color: rgba(255, 255, 255, 0.8);
+                background-color: rgba(230, 245, 255, 0.9);
                 padding: 2rem;
                 border-radius: 10px;
                 backdrop-filter: blur(4px);
+                border: 1px solid #2a6fdb;
             }
-            /* Sidebar */
+            /* Sidebar - light blue */
             [data-testid="stSidebar"] > div:first-child {
-                background-color: rgba(255, 255, 255, 0.85) !important;
+                background-color: rgba(210, 230, 255, 0.95) !important;
                 backdrop-filter: blur(4px);
-            }
-            /* Text colors */
-            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
-                color: #ffffff !important;
+                border-right: 1px solid #2a6fdb;
             }
             /* Widget styling */
             .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
-                background-color: rgba(240, 240, 240, 0.8) !important;
+                background-color: rgba(220, 235, 255, 0.8) !important;
+                border: 1px solid #3a7ae4;
             }
             /* Button styling */
             .stDownloadButton, .stButton>button {
-                background-color: #4a8af4 !important;
+                background-color: #2a6fdb !important;
                 color: white !important;
                 border: none !important;
             }
             .stDownloadButton:hover, .stButton>button:hover {
                 background-color: #3a7ae4 !important;
+            }
+            /* Text colors */
+            h1, h2, h3, h4, h5, h6 {
+                color: #1a4b8c !important;
+            }
+            /* Slider colors */
+            .st-bw {
+                background-color: #3a7ae4 !important;
+            }
+            .st-bx {
+                background-color: #2a6fdb !important;
             } </style>
             """,
             unsafe_allow_html=True
@@ -231,42 +251,45 @@ with st.spinner("Making predictions..."):
         st.error(f"Prediction error: {str(e)}")
         st.stop()
 
-# Display results in cards
+# Display results in cards with updated styling
 st.subheader("🔢 Model Predictions")
 col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown(
         f""" <div style="
-             background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
+             background-color: {'rgba(20, 50, 100, 0.8)' if st.session_state.dark_mode else 'rgba(220, 235, 255, 0.8)'};
              padding: 1.5rem;
              border-radius: 10px;
              box-shadow: 0 4px 8px rgba(0,0,0,0.1);
              text-align: center;
-         "> <h3 style="margin-top: 0;">Random Forest</h3> <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{rf_pred:.2f} MW</h2> </div>
+             border: 1px solid #2a6fdb;
+         "> <h3 style="margin-top: 0; color: {'#a8d0ff' if st.session_state.dark_mode else '#1a4b8c'};">Random Forest</h3> <h2 style="color: #2a6fdb;">{rf_pred:.2f} MW</h2> </div>
         """,
         unsafe_allow_html=True
     )
 with col2:
     st.markdown(
         f""" <div style="
-             background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
+             background-color: {'rgba(20, 50, 100, 0.8)' if st.session_state.dark_mode else 'rgba(220, 235, 255, 0.8)'};
              padding: 1.5rem;
              border-radius: 10px;
              box-shadow: 0 4px 8px rgba(0,0,0,0.1);
              text-align: center;
-         "> <h3 style="margin-top: 0;">XGBoost</h3> <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{xgb_pred:.2f} MW</h2> </div>
+             border: 1px solid #2a6fdb;
+         "> <h3 style="margin-top: 0; color: {'#a8d0ff' if st.session_state.dark_mode else '#1a4b8c'};">XGBoost</h3> <h2 style="color: #2a6fdb;">{xgb_pred:.2f} MW</h2> </div>
         """,
         unsafe_allow_html=True
     )
 with col3:
     st.markdown(
         f""" <div style="
-             background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
+             background-color: {'rgba(20, 50, 100, 0.8)' if st.session_state.dark_mode else 'rgba(220, 235, 255, 0.8)'};
              padding: 1.5rem;
              border-radius: 10px;
              box-shadow: 0 4px 8px rgba(0,0,0,0.1);
              text-align: center;
-         "> <h3 style="margin-top: 0;">Ensemble (Weight: 65% RF / 35% XGB)</h3> <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{ensemble_pred:.2f} MW</h2> <p style="margin-bottom: 0; font-size: 0.9rem;">{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg</p> </div>
+             border: 1px solid #2a6fdb;
+         "> <h3 style="margin-top: 0; color: {'#a8d0ff' if st.session_state.dark_mode else '#1a4b8c'};">Ensemble</h3> <h2 style="color: #2a6fdb;">{ensemble_pred:.2f} MW</h2> <p style="margin-bottom: 0; font-size: 0.9rem; color: {'#a8d0ff' if st.session_state.dark_mode else '#1a4b8c'};">{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg</p> </div>
         """,
         unsafe_allow_html=True
     )
