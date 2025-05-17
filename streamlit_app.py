@@ -3,13 +3,10 @@ import numpy as np
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
-from io import StringIO
 
-# Theme configuration
+# Theme configuration (only matplotlib plots)
 def set_theme(dark):
     plt.style.use('dark_background' if dark else 'default')
-    # (theme CSS remains unchanged — no changes needed here)
-    # ...
 
 # Cache model loading
 @st.cache_resource
@@ -24,7 +21,7 @@ def load_models():
         st.error(f"Error loading models: {str(e)}")
         st.stop()
 
-# Column mapping
+# Case-insensitive column mapping
 def map_columns(df):
     column_mapping = {
         "Ambient Temperature (°C)": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature", "AT"],
@@ -33,10 +30,12 @@ def map_columns(df):
         "Exhaust Vacuum (cmHg)": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "EV"]
     }
     mapped_columns = {}
+    columns_lower = {col.lower(): col for col in df.columns}
     for target, aliases in column_mapping.items():
-        for name in aliases:
-            if name in df.columns:
-                mapped_columns[target] = name
+        for alias in aliases:
+            alias_lower = alias.lower()
+            if alias_lower in columns_lower:
+                mapped_columns[target] = columns_lower[alias_lower]
                 break
     return mapped_columns
 
@@ -52,6 +51,19 @@ def generate_example_csv():
 
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
+
+# Feature bounds
+feature_bounds = {
+    'Ambient Temperature': [0.0, 50.0],
+    'Ambient Relative Humidity': [10.0, 100.0],
+    'Ambient Pressure': [799.0, 1035.0],
+    'Exhaust Vacuum': [3.0, 12.0],
+}
+
+# Initialize slider values in session state
+for feature, (low, high) in feature_bounds.items():
+    if f"slider_{feature}" not in st.session_state:
+        st.session_state[f"slider_{feature}"] = (low + high) / 2
 
 # ========== SIDEBAR ==========
 with st.sidebar:
@@ -70,41 +82,34 @@ with st.sidebar:
     with st.spinner("Loading models..."):
         rf_model, xgb_model, scaler = load_models()
 
-    feature_bounds = {
-        'Ambient Temperature': [0.0, 50.0],
-        'Ambient Relative Humidity': [10.0, 100.0],
-        'Ambient Pressure': [799.0, 1035.0],
-        'Exhaust Vacuum': [3.0, 12.0],
-    }
-
     st.subheader("Input Parameters")
-    inputs = {}
     for feature, (low, high) in feature_bounds.items():
-        default = (low + high) / 2
-        inputs[feature] = st.slider(feature, low, high, default)
+        st.session_state[f"slider_{feature}"] = st.slider(
+            feature, low, high, st.session_state[f"slider_{feature}"]
+        )
 
     if st.button("🔄 Reset to Defaults"):
-        for feature in inputs:
-            inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
+        for feature, (low, high) in feature_bounds.items():
+            st.session_state[f"slider_{feature}"] = (low + high) / 2
+        st.experimental_rerun()
 
 # ========== MAIN CONTENT ==========
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
 # Set best static weights
-rf_weight = 0.65
-xgb_weight = 0.35
+weights = {'rf': 0.65, 'xgb': 0.35}
 
 # Prepare input for prediction
 feature_names = list(feature_bounds.keys())
-input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
+input_features = np.array([st.session_state[f"slider_{f}"] for f in feature_names]).reshape(1, -1)
 
 with st.spinner("Making predictions..."):
     try:
         scaled_features = scaler.transform(input_features)
         rf_pred = rf_model.predict(scaled_features)[0]
         xgb_pred = xgb_model.predict(scaled_features)[0]
-        ensemble_pred = rf_weight * rf_pred + xgb_weight * xgb_pred
+        ensemble_pred = weights['rf'] * rf_pred + weights['xgb'] * xgb_pred
     except Exception as e:
         st.error(f"Prediction error: {str(e)}")
         st.stop()
@@ -159,7 +164,7 @@ if uploaded_file is not None:
             scaled = scaler.transform(features)
             rf_preds = rf_model.predict(scaled)
             xgb_preds = xgb_model.predict(scaled)
-            final_preds = rf_weight * rf_preds + xgb_weight * xgb_preds
+            final_preds = weights['rf'] * rf_preds + weights['xgb'] * xgb_preds
 
             results = df_processed.copy()
             results['RF_Prediction (MW)'] = rf_preds
