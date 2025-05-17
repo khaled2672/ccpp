@@ -76,6 +76,7 @@ with st.sidebar:
     1. Adjust sliders to set plant conditions  
     2. View the predicted power output  
     3. Upload CSV for batch predictions  
+    4. Best weight used: 65% RF + 35% XGB
     """)
 
     with st.spinner("Loading models..."):
