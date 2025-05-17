@@ -221,7 +221,6 @@ feature_names = list(feature_bounds.keys())[:-1]  # Exclude weight
 input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
 input_weight = inputs['Model Weight (RF vs XGB)']
 
-Mohamed Khaled, [5/17/2025 10:27 PM]
 # Make predictions
 with st.spinner("Making predictions..."):
     try:
