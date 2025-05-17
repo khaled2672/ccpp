@@ -149,7 +149,6 @@ with st.sidebar:
     2. View the predicted power output  
     3. Compare models  
     4. Upload CSV for batch predictions  
-    5. Ensemble weights fixed: 65% RF / 35% XGB
     """)
     with st.spinner("Loading models..."):
         rf_model, xgb_model, scaler = load_models()
