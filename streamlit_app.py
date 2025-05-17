@@ -297,3 +297,72 @@ if uploaded_file is not None:
         if df.empty:
             st.error("Uploaded file is empty")
             st.stop()
+            st.success("File uploaded successfully!")
+        
+        with st.expander("View uploaded data"):
+            st.dataframe(df.head())
+        
+        # Column mapping
+        mapped_columns = map_columns(df)
+        if len(mapped_columns) < 4:
+            missing_cols = [col for col in feature_names if col not in mapped_columns]
+            st.error(f"Could not find columns for: {', '.join(missing_cols)}")
+            st.stop()
+            
+        df_processed = df.rename(columns=mapped_columns)
+        required_cols = feature_names  # From feature_bounds
+        
+        # Check for missing columns after mapping
+        missing_cols = [col for col in required_cols if col not in df_processed.columns]
+        if missing_cols:
+            st.error(f"Missing columns after mapping: {', '.join(missing_cols)}")
+            st.stop()
+            
+        # Process data
+        with st.spinner("Processing data..."):
+            features = df_processed[required_cols]
+            try:
+                scaled = scaler.transform(features)
+                rf_preds = rf_model.predict(scaled)
+                xgb_preds = xgb_model.predict(scaled)
+                final_preds = input_weight * rf_preds + (1 - input_weight) * xgb_preds
+                
+                results = df_processed.copy()
+                results['RF_Prediction (MW)'] = rf_preds
+                results['XGB_Prediction (MW)'] = xgb_preds
+                results['Ensemble_Prediction (MW)'] = final_preds
+                
+                st.success("Predictions completed!")
+                
+                # Display results with conditional formatting
+                def color_positive_green(val):
+                    color = 'green' if val > (rf_preds.mean() + xgb_preds.mean())/2 else 'red'
+                    return f'color: {color}'
+                
+                st.dataframe(results.style.format({
+                    'RF_Prediction (MW)': '{:.2f}',
+                    'XGB_Prediction (MW)': '{:.2f}',
+                    'Ensemble_Prediction (MW)': '{:.2f}'
+                }).applymap(color_positive_green, subset=['Ensemble_Prediction (MW)']))
+                
+                # Download results
+                csv = results.to_csv(index=False).encode()
+                st.download_button(
+                    "⬇️ Download Full Results",
+                    data=csv,
+                    file_name="ccpp_predictions.csv",
+                    mime="text/csv"
+                )
+                
+            except Exception as e:
+                st.error(f"Error during prediction: {str(e)}")
+                
+    except Exception as e:
+        st.error(f"Error processing file: {str(e)}")
+
+# Footer
+st.markdown("---")
+st.caption("""
+Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)
+Model weights: Random Forest ({:.0f}%), XGBoost ({:.0f}%)
+""".format(input_weight*100, (1-input_weight)*100))
