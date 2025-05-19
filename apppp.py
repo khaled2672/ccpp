@@ -160,32 +160,53 @@ with st.sidebar:
     with st.spinner("Loading models..."):
         rf_model, xgb_model, scaler = load_models()
 
-    feature_bounds = {
-        'Ambient Temperature': [0.0, 50.0],
-        'Ambient Relative Humidity': [10.0, 100.0],
-        'Ambient Pressure': [799.0, 1035.0],
-        'Exhaust Vacuum': [3.0, 12.0]
-    }
+feature_bounds = {
+    'Ambient Temperature': [0.0, 50.0],
+    'Ambient Relative Humidity': [10.0, 100.0],
+    'Ambient Pressure': [799.0, 1035.0],
+    'Exhaust Vacuum': [3.0, 12.0]
+}
 
-    st.subheader("Input Parameters")
-    inputs = {}
-    for feature, (low, high) in feature_bounds.items():
-        default = (low + high) / 2
-        inputs[feature] = st.slider(
-            feature, low, high, default,
+# Initialize session state for each feature if not already set
+for feature, (low, high) in feature_bounds.items():
+    if feature not in st.session_state:
+        st.session_state[feature] = (low + high) / 2
+
+st.subheader("Input Parameters")
+
+# Layout sliders with -/+ buttons to increment/decrement by 0.01
+for feature, (low, high) in feature_bounds.items():
+    col1, col2, col3 = st.columns([6, 1, 1])
+    
+    # Slider using session_state value
+    with col1:
+        st.session_state[feature] = st.slider(
+            feature, low, high, st.session_state[feature], step=0.01,
             help=f"Adjust {feature} between {low} and {high}"
         )
+    
+    # Decrement button
+    with col2:
+        if st.button("–", key=f"dec_{feature}"):
+            new_val = max(low, st.session_state[feature] - 0.01)
+            st.session_state[feature] = round(new_val, 2)
+    
+    # Increment button
+    with col3:
+        if st.button("+", key=f"inc_{feature}"):
+            new_val = min(high, st.session_state[feature] + 0.01)
+            st.session_state[feature] = round(new_val, 2)
 
-    if st.button("🔄 Reset to Defaults"):
-        for feature in inputs:
-            inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
+if st.button("🔄 Reset to Defaults"):
+    for feature in feature_bounds:
+        st.session_state[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
 # Main
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
 feature_names = list(feature_bounds.keys())
-input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
+input_features = np.array([st.session_state[f] for f in feature_names]).reshape(1, -1)
 input_weight = 0.65
 
 with st.spinner("Making predictions..."):
