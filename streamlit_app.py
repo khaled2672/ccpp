@@ -34,18 +34,24 @@ def set_theme(dark):
                 background-color: rgba(20, 20, 20, 0.95) !important;
                 color: white;
             }
-            .stSlider label {
-                color: white !important;
-                font-weight: bold;
-            }
             .stDownloadButton>button, .stButton>button {
-                background-color: red !important;
+                background-color: black !important;
                 color: white !important;
                 border: 1px solid white !important;
                 font-weight: bold;
             }
             .stDownloadButton>button:hover, .stButton>button:hover {
-                background-color: darkred !important;
+                background-color: #222 !important;
+            }
+            /* Sidebar slider labels white */
+            .css-1aumxhk .stSlider > label {
+                color: white !important;
+                font-weight: bold;
+            }
+            /* File uploader label bold */
+            .css-1aumxhk label[for="fileUploader"] {
+                font-weight: bold;
+                color: white !important;
             }
             </style>""",
             unsafe_allow_html=True
@@ -77,13 +83,23 @@ def set_theme(dark):
                 background-color: rgba(250, 250, 250, 0.95) !important;
             }
             .stDownloadButton>button, .stButton>button {
-                background-color: red !important;
+                background-color: black !important;
                 color: white !important;
                 border: 1px solid black !important;
                 font-weight: bold;
             }
             .stDownloadButton>button:hover, .stButton>button:hover {
-                background-color: darkred !important;
+                background-color: #222 !important;
+            }
+            /* Sidebar slider labels black */
+            .css-1aumxhk .stSlider > label {
+                color: black !important;
+                font-weight: bold;
+            }
+            /* File uploader label bold black */
+            .css-1aumxhk label[for="fileUploader"] {
+                font-weight: bold;
+                color: black !important;
             }
             </style>""",
             unsafe_allow_html=True
@@ -135,7 +151,7 @@ with st.sidebar:
     st.session_state.dark_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
     set_theme(st.session_state.dark_mode)
     st.subheader("How to Use")
-    st.markdown(""" 
+    st.markdown("""  
     1. Adjust sliders to set plant conditions  
     2. View the predicted power output  
     3. Compare models  
@@ -184,7 +200,6 @@ with st.spinner("Making predictions..."):
 
 st.subheader("🔢 Model Predictions")
 col1, col2, col3 = st.columns(3)
-color = "white" if st.session_state.dark_mode else "#2a6fdb"
 
 with col1:
     st.markdown(
@@ -205,7 +220,7 @@ with col3:
         f"""<div style="background-color: rgba(0,0,0,0.7); padding: 1.5rem; border-radius: 10px; text-align: center;">
             <h3 style="margin-top: 0; color: white;">Ensemble (65% RF / 35% XGB)</h3>
             <h2 style="color: white;">{ensemble_pred:.2f} MW</h2>
-            <p style="margin-bottom: 0; font-size: 0.9rem;">{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg</p>
+            <p style="margin-bottom: 0; font-size: 0.9rem; color: white;">{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg</p>
         </div>""", unsafe_allow_html=True
     )
 
@@ -240,7 +255,8 @@ if uploaded_file:
             df["XGBoost Prediction (MW)"] = xgb_preds
             df["Ensemble Prediction (MW)"] = final_preds
 
-            st.success(f"Predicted {len(final_preds)} records successfully!")
+            # White success message for predictions
+            st.markdown(f'<p style="color:white; font-weight:bold;">Predicted {len(final_preds)} records successfully!</p>', unsafe_allow_html=True)
             st.dataframe(df)
 
             csv_buffer = StringIO()
