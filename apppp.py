@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st 
 import numpy as np
 import pandas as pd
 import joblib
@@ -9,8 +9,7 @@ def set_theme(dark):
     plt.style.use('dark_background' if dark else 'default')
     if dark:
         st.markdown(
-            """
-            <style>
+            """<style>
             .stApp {
                 background-image: url("https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg");
                 background-size: cover;
@@ -54,14 +53,12 @@ def set_theme(dark):
                 font-weight: bold;
                 color: white !important;
             }
-            </style>
-            """,
+            </style>""",
             unsafe_allow_html=True
         )
     else:
         st.markdown(
-            """
-            <style>
+            """<style>
             .stApp {
                 background-image: url("https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg");
                 background-size: cover;
@@ -104,8 +101,7 @@ def set_theme(dark):
                 font-weight: bold;
                 color: black !important;
             }
-            </style>
-            """,
+            </style>""",
             unsafe_allow_html=True
         )
 
@@ -150,13 +146,7 @@ if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
 if 'inputs' not in st.session_state:
-    feature_bounds = {
-        'Ambient Temperature': [0.0, 50.0],
-        'Ambient Relative Humidity': [10.0, 100.0],
-        'Ambient Pressure': [799.0, 1035.0],
-        'Exhaust Vacuum': [3.0, 12.0]
-    }
-    st.session_state.inputs = {f: (low + high)/2 for f, (low, high) in feature_bounds.items()}
+    st.session_state.inputs = {}
 
 # Sidebar
 with st.sidebar:
@@ -164,7 +154,7 @@ with st.sidebar:
     st.session_state.dark_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
     set_theme(st.session_state.dark_mode)
     st.subheader("How to Use")
-    st.markdown("""
+    st.markdown("""  
     1. Adjust sliders to set plant conditions  
     2. View the predicted power output  
     3. Compare models  
@@ -173,35 +163,41 @@ with st.sidebar:
     with st.spinner("Loading models..."):
         rf_model, xgb_model, scaler = load_models()
 
-# Feature bounds for inputs
-feature_bounds = {
-    'Ambient Temperature': [0.0, 50.0],
-    'Ambient Relative Humidity': [10.0, 100.0],
-    'Ambient Pressure': [799.0, 1035.0],
-    'Exhaust Vacuum': [3.0, 12.0]
-}
+    feature_bounds = {
+        'Ambient Temperature': [0.0, 50.0],
+        'Ambient Relative Humidity': [10.0, 100.0],
+        'Ambient Pressure': [799.0, 1035.0],
+        'Exhaust Vacuum': [3.0, 12.0]
+    }
 
-st.subheader("Input Parameters")
+    st.subheader("Input Parameters")
 
-# Display sliders and +/- buttons for each feature
-for feature, (low, high) in feature_bounds.items():
-    val = st.slider(feature, low, high, st.session_state.inputs[feature], step=0.01)
-    st.session_state.inputs[feature] = val
+    increment = 0.01  # step for + and - buttons
 
-    col1, col2, col3 = st.columns([1, 1, 6])
-    with col1:
-        if st.button(f"- 0.01 {feature}", key=f"{feature}_minus"):
-            new_val = max(low, st.session_state.inputs[feature] - 0.01)
-            st.session_state.inputs[feature] = round(new_val, 2)
-    with col2:
-        if st.button(f"+ 0.01 {feature}", key=f"{feature}_plus"):
-            new_val = min(high, st.session_state.inputs[feature] + 0.01)
-            st.session_state.inputs[feature] = round(new_val, 2)
-    st.markdown("---")
+    for feature, (low, high) in feature_bounds.items():
+        # Initialize session state for each feature if not present
+        if feature not in st.session_state.inputs:
+            st.session_state.inputs[feature] = (low + high) / 2
 
-if st.button("🔄 Reset to Defaults"):
-    for feature in feature_bounds:
-        st.session_state.inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
+        col1, col2, col3 = st.columns([6,1,1])
+        with col1:
+            val = st.slider(
+                feature, low, high, st.session_state.inputs[feature], step=0.01,
+                help=f"Adjust {feature} between {low} and {high}"
+            )
+            st.session_state.inputs[feature] = val
+        with col2:
+            if st.button(f"-", key=f"minus_{feature}"):
+                new_val = max(low, round(st.session_state.inputs[feature] - increment, 2))
+                st.session_state.inputs[feature] = new_val
+        with col3:
+            if st.button(f"+", key=f"plus_{feature}"):
+                new_val = min(high, round(st.session_state.inputs[feature] + increment, 2))
+                st.session_state.inputs[feature] = new_val
+
+    if st.button("🔄 Reset to Defaults"):
+        for feature in feature_bounds:
+            st.session_state.inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
 # Main
 st.title("🔋 Combined Cycle Power Plant Predictor")
@@ -227,32 +223,30 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown(
         f"""<div style="background-color: rgba(0,0,0,0.7); padding: 1.5rem; border-radius: 10px; text-align: center;">
-        <h3 style="margin-top: 0; color: white;">Random Forest</h3>
-        <h2 style="color: red;">{rf_pred:.2f} MW</h2>
-        </div>""",
-        unsafe_allow_html=True
+            <h3 style="margin-top: 0; color: white;">Random Forest</h3>
+            <h2 style="color: red;">{rf_pred:.2f} MW</h2>
+        </div>""", unsafe_allow_html=True
     )
 with col2:
     st.markdown(
         f"""<div style="background-color: rgba(0,0,0,0.7); padding: 1.5rem; border-radius: 10px; text-align: center;">
-        <h3 style="margin-top: 0; color: white;">XGBoost</h3>
-        <h2 style="color: red;">{xgb_pred:.2f} MW</h2>
-        </div>""",
-        unsafe_allow_html=True
+            <h3 style="margin-top: 0; color: white;">XGBoost</h3>
+            <h2 style="color: red;">{xgb_pred:.2f} MW</h2>
+        </div>""", unsafe_allow_html=True
     )
 with col3:
     st.markdown(
         f"""<div style="background-color: rgba(0,0,0,0.7); padding: 1.5rem; border-radius: 10px; text-align: center;">
-        <h3 style="margin-top: 0; color: white;">Ensemble (65% RF / 35% XGB)</h3>
-        <h2 style="color: white;">{ensemble_pred:.2f} MW</h2>
-        <p style="margin-bottom: 0; font-size: 0.9rem; color: white;">{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg</p>
-        </div>""",
-        unsafe_allow_html=True
+            <h3 style="margin-top: 0; color: white;">Ensemble (65% RF / 35% XGB)</h3>
+            <h2 style="color: white;">{ensemble_pred:.2f} MW</h2>
+            <p style="margin-bottom: 0; font-size: 0.9rem; color: white;">{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg</p>
+        </div>""", unsafe_allow_html=True
     )
 
 st.markdown("---")
 st.subheader("📁 Batch Prediction via CSV Upload")
 
+# Bold label for file uploader
 st.markdown("**Upload CSV file with plant conditions**")
 uploaded_file = st.file_uploader("", type=["csv"])
 
@@ -280,6 +274,7 @@ if uploaded_file:
             df["XGBoost Prediction (MW)"] = xgb_preds
             df["Ensemble Prediction (MW)"] = final_preds
 
+            # White success message for predictions
             st.markdown(f'<p style="color:white; font-weight:bold;">Predicted {len(final_preds)} records successfully!</p>', unsafe_allow_html=True)
             st.dataframe(df)
 
@@ -295,9 +290,11 @@ if uploaded_file:
         st.error(f"Error processing uploaded file: {str(e)}")
 else:
     st.markdown(
-        """<div style="color: white; font-weight: bold; font-size: 16px;">
-        Upload a CSV file to run batch predictions. You can download an example file below.
-        </div>""",
+        """
+        <div style="color: white; font-weight: bold; font-size: 16px;">
+            Upload a CSV file to run batch predictions. You can download an example file below.
+        </div>
+        """,
         unsafe_allow_html=True
     )
     st.download_button(
