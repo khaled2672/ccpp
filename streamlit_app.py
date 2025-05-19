@@ -34,6 +34,10 @@ def set_theme(dark):
                 background-color: rgba(20, 20, 20, 0.95) !important;
                 color: white;
             }
+            .stSlider label {
+                color: white !important;
+                font-weight: bold;
+            }
             .stDownloadButton>button, .stButton>button {
                 background-color: red !important;
                 color: white !important;
@@ -131,7 +135,7 @@ with st.sidebar:
     st.session_state.dark_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
     set_theme(st.session_state.dark_mode)
     st.subheader("How to Use")
-    st.markdown("""
+    st.markdown(""" 
     1. Adjust sliders to set plant conditions  
     2. View the predicted power output  
     3. Compare models  
@@ -185,21 +189,21 @@ color = "white" if st.session_state.dark_mode else "#2a6fdb"
 with col1:
     st.markdown(
         f"""<div style="background-color: rgba(0,0,0,0.7); padding: 1.5rem; border-radius: 10px; text-align: center;">
-            <h3 style="margin-top: 0;">Random Forest</h3>
+            <h3 style="margin-top: 0; color: white;">Random Forest</h3>
             <h2 style="color: red;">{rf_pred:.2f} MW</h2>
         </div>""", unsafe_allow_html=True
     )
 with col2:
     st.markdown(
         f"""<div style="background-color: rgba(0,0,0,0.7); padding: 1.5rem; border-radius: 10px; text-align: center;">
-            <h3 style="margin-top: 0;">XGBoost</h3>
+            <h3 style="margin-top: 0; color: white;">XGBoost</h3>
             <h2 style="color: red;">{xgb_pred:.2f} MW</h2>
         </div>""", unsafe_allow_html=True
     )
 with col3:
     st.markdown(
         f"""<div style="background-color: rgba(0,0,0,0.7); padding: 1.5rem; border-radius: 10px; text-align: center;">
-            <h3 style="margin-top: 0;">Ensemble (65% RF / 35% XGB)</h3>
+            <h3 style="margin-top: 0; color: white;">Ensemble (65% RF / 35% XGB)</h3>
             <h2 style="color: white;">{ensemble_pred:.2f} MW</h2>
             <p style="margin-bottom: 0; font-size: 0.9rem;">{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg</p>
         </div>""", unsafe_allow_html=True
