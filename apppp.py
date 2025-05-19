@@ -145,6 +145,9 @@ def generate_example_csv():
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
+if 'inputs' not in st.session_state:
+    st.session_state.inputs = {}
+
 # Sidebar
 with st.sidebar:
     st.title("⚙️ CCPP Power Predictor")
@@ -168,25 +171,40 @@ with st.sidebar:
     }
 
     st.subheader("Input Parameters")
-    inputs = {}
+
+    increment = 0.01  # step for + and - buttons
+
     for feature, (low, high) in feature_bounds.items():
-        default = (low + high) / 2
-        label_with_icon = f"{feature} ±"
-        inputs[feature] = st.slider(
-            label_with_icon, low, high, default, step=0.01,
-            help=f"Adjust {feature} between {low} and {high} with ±0.01 step"
-        )
+        # Initialize session state for each feature if not present
+        if feature not in st.session_state.inputs:
+            st.session_state.inputs[feature] = (low + high) / 2
+
+        col1, col2, col3 = st.columns([8, 1.5, 1.5])  # Wider button columns
+        with col1:
+            val = st.slider(
+                feature, low, high, st.session_state.inputs[feature], step=0.01,
+                help=f"Adjust {feature} between {low} and {high}"
+            )
+            st.session_state.inputs[feature] = val
+        with col2:
+            if st.button("−", key=f"minus_{feature}", use_container_width=True):
+                new_val = max(low, round(st.session_state.inputs[feature] - increment, 2))
+                st.session_state.inputs[feature] = new_val
+        with col3:
+            if st.button("+", key=f"plus_{feature}", use_container_width=True):
+                new_val = min(high, round(st.session_state.inputs[feature] + increment, 2))
+                st.session_state.inputs[feature] = new_val
 
     if st.button("🔄 Reset to Defaults"):
-        for feature in inputs:
-            inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
+        for feature in feature_bounds:
+            st.session_state.inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
 # Main
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
 feature_names = list(feature_bounds.keys())
-input_features = np.array([inputs[f] for f in feature_names]).reshape(1, -1)
+input_features = np.array([st.session_state.inputs[f] for f in feature_names]).reshape(1, -1)
 input_weight = 0.65
 
 with st.spinner("Making predictions..."):
