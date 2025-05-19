@@ -5,78 +5,69 @@ import joblib
 import matplotlib.pyplot as plt
 from io import StringIO
 
-# Theme configuration with updated colors only
 def set_theme(dark):
+    background_url = "https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg"
     if dark:
-        st.markdown(
-            """<style>
-            .stApp {
-                background-color: #000000;
+        st.markdown(f"""
+            <style>
+            .stApp {{
+                background: url('{background_url}') no-repeat center center fixed;
+                background-size: cover;
                 color: #FFFFFF;
-            }
-            .main .block-container {
-                background-color: #000000;
+            }}
+            .main .block-container {{
+                background-color: rgba(0, 0, 0, 0.75);
                 padding: 2rem;
                 border-radius: 12px;
-            }
-            [data-testid="stSidebar"] > div:first-child {
+            }}
+            [data-testid="stSidebar"] > div:first-child {{
                 background-color: #111111 !important;
                 color: #FFFFFF;
-            }
-            .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
-                background-color: #111111 !important;
+            }}
+            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {{
                 color: #FFFFFF !important;
-            }
-            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
-                color: #FFFFFF !important;
-            }
-            .stDownloadButton, .stButton>button {
+            }}
+            .stDownloadButton, .stButton>button {{
                 background-color: #FF0000 !important;
                 color: #FFFFFF !important;
                 border: 1px solid #FFFFFF !important;
-            }
-            .stDownloadButton:hover, .stButton>button:hover {
+            }}
+            .stDownloadButton:hover, .stButton>button:hover {{
                 background-color: #cc0000 !important;
-            }
-            </style>""",
-            unsafe_allow_html=True
-        )
+            }}
+            </style>
+        """, unsafe_allow_html=True)
     else:
-        st.markdown(
-            """<style>
-            .stApp {
-                background-color: #FFFFFF;
+        st.markdown(f"""
+            <style>
+            .stApp {{
+                background: url('{background_url}') no-repeat center center fixed;
+                background-size: cover;
                 color: #000000;
-            }
-            .main .block-container {
-                background-color: #FFFFFF;
+            }}
+            .main .block-container {{
+                background-color: rgba(255, 255, 255, 0.85);
                 padding: 2rem;
                 border-radius: 12px;
-            }
-            [data-testid="stSidebar"] > div:first-child {
-                background-color: #F0F0F0 !important;
+            }}
+            [data-testid="stSidebar"] > div:first-child {{
+                background-color: #FFFFFF !important;
                 color: #000000;
-            }
-            .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
-                background-color: #F5F5F5 !important;
+            }}
+            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {{
                 color: #000000 !important;
-            }
-            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
-                color: #000000 !important;
-            }
-            .stDownloadButton, .stButton>button {
+            }}
+            .stDownloadButton, .stButton>button {{
                 background-color: #FF0000 !important;
                 color: #FFFFFF !important;
                 border: none !important;
-            }
-            .stDownloadButton:hover, .stButton>button:hover {
+            }}
+            .stDownloadButton:hover, .stButton>button:hover {{
                 background-color: #cc0000 !important;
-            }
-            </style>""",
-            unsafe_allow_html=True
-        )
+            }}
+            </style>
+        """, unsafe_allow_html=True)
 
-# Cache resources
 @st.cache_resource
 def load_models():
     try:
@@ -92,9 +83,9 @@ def load_models():
 def map_columns(df):
     column_mapping = {
         "Ambient Temperature": ["Ambient Temperature", "Temperature", "Temp", "Amb Temp", "Ambient_Temperature", "AT", "Temperature (°C)"],
-        "Ambient Relative Humidity": ["Relative Humidity", "Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH", "Humidity (%)"],
-        "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP", "Pressure (mbar)"],
-        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "EV", "Vacuum (cmHg)"]
+        "Ambient Relative Humidity": ["Relative Humidity", "Ambient Relative Humidity", "Humidity", "Rel Humidity", "Humidity (%)", "RH"],
+        "Ambient Pressure": ["Ambient Pressure", "Pressure", "Amb Pressure", "Pressure (mbar)", "AP"],
+        "Exhaust Vacuum": ["Exhaust Vacuum", "Vacuum", "Exhaust Vac", "Vacuum (cmHg)", "EV"]
     }
     mapped_columns = {}
     for target, possible_names in column_mapping.items():
@@ -114,11 +105,9 @@ def generate_example_csv():
     }
     return pd.DataFrame(example_data).to_csv(index=False)
 
-# Session state
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
-# Sidebar
 with st.sidebar:
     st.title("⚙️ CCPP Power Predictor")
     st.session_state.dark_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
@@ -153,7 +142,6 @@ with st.sidebar:
         for feature in inputs:
             inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
-# Main
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
@@ -171,16 +159,27 @@ with st.spinner("Making predictions..."):
         st.error(f"Prediction error: {str(e)}")
         st.stop()
 
+text_color = "#FFFFFF" if st.session_state.dark_mode else "#000000"
+
 st.subheader("🔢 Model Predictions")
 col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric("Random Forest", f"{rf_pred:.2f} MW")
-with col2:
-    st.metric("XGBoost", f"{xgb_pred:.2f} MW")
-with col3:
-    st.metric("Ensemble (65% RF / 35% XGB)", f"{ensemble_pred:.2f} MW", f"{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg")
+for col, title, value in zip(
+    [col1, col2, col3],
+    ["Random Forest", "XGBoost", "Ensemble (65% RF / 35% XGB)"],
+    [rf_pred, xgb_pred, ensemble_pred]
+):
+    col.markdown(
+        f""" <div style="
+             background-color: rgba(30, 30, 30, 0.7) if st.session_state.dark_mode else rgba(240, 240, 240, 0.8);
+             padding: 1.5rem;
+             border-radius: 10px;
+             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+             text-align: center;
+         "> <h3 style="margin-top: 0; color: {text_color};">{title}</h3> <h2 style="color: {text_color};">{value:.2f} MW</h2> </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-# Batch prediction
 st.markdown("---")
 st.subheader("📁 Batch Prediction via CSV Upload")
 
@@ -232,7 +231,6 @@ else:
         mime="text/csv"
     )
 
-# Footer
 st.markdown("---")
 st.caption("""
 Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
