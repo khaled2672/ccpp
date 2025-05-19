@@ -5,6 +5,20 @@ import joblib
 import matplotlib.pyplot as plt
 from io import StringIO
 
+# --- Add CSS for bigger and colored + / - buttons ---
+st.markdown("""
+<style>
+button[data-testid^="stButton"] > div > span {
+    font-size: 24px !important;  /* Make + and − bigger */
+    font-weight: bold !important;
+    color: #e60000 !important; /* Bright red for visibility */
+}
+button[data-testid^="stButton"]:hover > div > span {
+    color: #ff4d4d !important;  /* lighter red on hover */
+}
+</style>
+""", unsafe_allow_html=True)
+
 def set_theme(dark):
     plt.style.use('dark_background' if dark else 'default')
     if dark:
@@ -179,7 +193,7 @@ with st.sidebar:
         if feature not in st.session_state.inputs:
             st.session_state.inputs[feature] = (low + high) / 2
 
-        col1, col2, col3 = st.columns([8, 1.5, 1.5])  # Wider button columns
+        col1, col2, col3 = st.columns([8, 1.5, 1.5])
         with col1:
             val = st.slider(
                 feature, low, high, st.session_state.inputs[feature], step=0.01,
