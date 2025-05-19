@@ -6,67 +6,84 @@ import matplotlib.pyplot as plt
 from io import StringIO
 
 def set_theme(dark):
-    background_url = "https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg"
+    plt.style.use('dark_background' if dark else 'default')
     if dark:
-        st.markdown(f"""
-            <style>
-            .stApp {{
-                background: url('{background_url}') no-repeat center center fixed;
+        st.markdown(
+            """<style>
+            .stApp {
+                background-image: url("https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg");
                 background-size: cover;
-                color: #FFFFFF;
-            }}
-            .main .block-container {{
-                background-color: rgba(0, 0, 0, 0.75);
+                background-attachment: fixed;
+                background-position: center;
+                color: white;
+            }
+            .stApp:before {
+                content: "";
+                position: absolute;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background-color: rgba(0, 0, 0, 0.85);
+                z-index: -1;
+            }
+            .main .block-container {
+                background-color: rgba(0, 0, 0, 0.8);
                 padding: 2rem;
                 border-radius: 12px;
-            }}
-            [data-testid="stSidebar"] > div:first-child {{
-                background-color: #111111 !important;
-                color: #FFFFFF;
-            }}
-            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {{
-                color: #FFFFFF !important;
-            }}
-            .stDownloadButton, .stButton>button {{
-                background-color: #FF0000 !important;
-                color: #FFFFFF !important;
-                border: 1px solid #FFFFFF !important;
-            }}
-            .stDownloadButton:hover, .stButton>button:hover {{
-                background-color: #cc0000 !important;
-            }}
-            </style>
-        """, unsafe_allow_html=True)
+                backdrop-filter: blur(5px);
+            }
+            [data-testid="stSidebar"] > div:first-child {
+                background-color: rgba(20, 20, 20, 0.95) !important;
+                color: white;
+            }
+            .stDownloadButton>button, .stButton>button {
+                background-color: red !important;
+                color: white !important;
+                border: 1px solid white !important;
+                font-weight: bold;
+            }
+            .stDownloadButton>button:hover, .stButton>button:hover {
+                background-color: darkred !important;
+            }
+            </style>""",
+            unsafe_allow_html=True
+        )
     else:
-        st.markdown(f"""
-            <style>
-            .stApp {{
-                background: url('{background_url}') no-repeat center center fixed;
+        st.markdown(
+            """<style>
+            .stApp {
+                background-image: url("https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg");
                 background-size: cover;
-                color: #000000;
-            }}
-            .main .block-container {{
+                background-attachment: fixed;
+                background-position: center;
+                color: black;
+            }
+            .stApp:before {
+                content: "";
+                position: absolute;
+                top: 0; left: 0; right: 0; bottom: 0;
                 background-color: rgba(255, 255, 255, 0.85);
+                z-index: -1;
+            }
+            .main .block-container {
+                background-color: rgba(255, 255, 255, 0.9);
                 padding: 2rem;
                 border-radius: 12px;
-            }}
-            [data-testid="stSidebar"] > div:first-child {{
-                background-color: #FFFFFF !important;
-                color: #000000;
-            }}
-            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {{
-                color: #000000 !important;
-            }}
-            .stDownloadButton, .stButton>button {{
-                background-color: #FF0000 !important;
-                color: #FFFFFF !important;
-                border: none !important;
-            }}
-            .stDownloadButton:hover, .stButton>button:hover {{
-                background-color: #cc0000 !important;
-            }}
-            </style>
-        """, unsafe_allow_html=True)
+                backdrop-filter: blur(4px);
+            }
+            [data-testid="stSidebar"] > div:first-child {
+                background-color: rgba(250, 250, 250, 0.95) !important;
+            }
+            .stDownloadButton>button, .stButton>button {
+                background-color: red !important;
+                color: white !important;
+                border: 1px solid black !important;
+                font-weight: bold;
+            }
+            .stDownloadButton>button:hover, .stButton>button:hover {
+                background-color: darkred !important;
+            }
+            </style>""",
+            unsafe_allow_html=True
+        )
 
 @st.cache_resource
 def load_models():
@@ -108,6 +125,7 @@ def generate_example_csv():
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
+# Sidebar
 with st.sidebar:
     st.title("⚙️ CCPP Power Predictor")
     st.session_state.dark_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
@@ -142,6 +160,7 @@ with st.sidebar:
         for feature in inputs:
             inputs[feature] = (feature_bounds[feature][0] + feature_bounds[feature][1]) / 2
 
+# Main
 st.title("🔋 Combined Cycle Power Plant Predictor")
 st.markdown("Predict power output using ambient conditions with an ensemble of Random Forest & XGBoost models.")
 
@@ -159,31 +178,39 @@ with st.spinner("Making predictions..."):
         st.error(f"Prediction error: {str(e)}")
         st.stop()
 
-text_color = "#FFFFFF" if st.session_state.dark_mode else "#000000"
-
 st.subheader("🔢 Model Predictions")
 col1, col2, col3 = st.columns(3)
-for col, title, value in zip(
-    [col1, col2, col3],
-    ["Random Forest", "XGBoost", "Ensemble (65% RF / 35% XGB)"],
-    [rf_pred, xgb_pred, ensemble_pred]
-):
-    col.markdown(
-        f""" <div style="
-             background-color: rgba(30, 30, 30, 0.7) if st.session_state.dark_mode else rgba(240, 240, 240, 0.8);
-             padding: 1.5rem;
-             border-radius: 10px;
-             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-             text-align: center;
-         "> <h3 style="margin-top: 0; color: {text_color};">{title}</h3> <h2 style="color: {text_color};">{value:.2f} MW</h2> </div>
-        """,
-        unsafe_allow_html=True
+color = "white" if st.session_state.dark_mode else "#2a6fdb"
+
+with col1:
+    st.markdown(
+        f"""<div style="background-color: rgba(0,0,0,0.7); padding: 1.5rem; border-radius: 10px; text-align: center;">
+            <h3 style="margin-top: 0;">Random Forest</h3>
+            <h2 style="color: red;">{rf_pred:.2f} MW</h2>
+        </div>""", unsafe_allow_html=True
+    )
+with col2:
+    st.markdown(
+        f"""<div style="background-color: rgba(0,0,0,0.7); padding: 1.5rem; border-radius: 10px; text-align: center;">
+            <h3 style="margin-top: 0;">XGBoost</h3>
+            <h2 style="color: red;">{xgb_pred:.2f} MW</h2>
+        </div>""", unsafe_allow_html=True
+    )
+with col3:
+    st.markdown(
+        f"""<div style="background-color: rgba(0,0,0,0.7); padding: 1.5rem; border-radius: 10px; text-align: center;">
+            <h3 style="margin-top: 0;">Ensemble (65% RF / 35% XGB)</h3>
+            <h2 style="color: white;">{ensemble_pred:.2f} MW</h2>
+            <p style="margin-bottom: 0; font-size: 0.9rem;">{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg</p>
+        </div>""", unsafe_allow_html=True
     )
 
 st.markdown("---")
 st.subheader("📁 Batch Prediction via CSV Upload")
 
-uploaded_file = st.file_uploader("Upload CSV file with plant conditions", type=["csv"])
+# Bold label for file uploader
+st.markdown("**Upload CSV file with plant conditions**")
+uploaded_file = st.file_uploader("", type=["csv"])
 
 if uploaded_file:
     try:
@@ -223,7 +250,14 @@ if uploaded_file:
     except Exception as e:
         st.error(f"Error processing uploaded file: {str(e)}")
 else:
-    st.info("Upload a CSV file to run batch predictions. You can download an example file below.")
+    st.markdown(
+        """
+        <div style="color: white; font-weight: bold; font-size: 16px;">
+            Upload a CSV file to run batch predictions. You can download an example file below.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     st.download_button(
         label="Download Example CSV",
         data=generate_example_csv(),
@@ -231,6 +265,7 @@ else:
         mime="text/csv"
     )
 
+# Footer
 st.markdown("---")
 st.caption("""
 Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
