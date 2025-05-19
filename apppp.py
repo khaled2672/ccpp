@@ -7,92 +7,72 @@ from io import StringIO
 
 # Theme configuration with updated colors only
 def set_theme(dark):
-    plt.style.use('dark_background' if dark else 'default')
     if dark:
         st.markdown(
-            """ <style>
+            """<style>
             .stApp {
-                background-image: url("https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg");
-                background-size: cover;
-                background-attachment: fixed;
-                background-position: center;
-                color: #e0e0e0;
-            }
-            .stApp:before {
-                content: "";
-                position: absolute;
-                top: 0; left: 0; right: 0; bottom: 0;
-                background-color: rgba(0, 0, 0, 0.65);
-                z-index: -1;
+                background-color: #000000;
+                color: #FFFFFF;
             }
             .main .block-container {
-                background-color: rgba(20, 20, 20, 0.8);
+                background-color: #000000;
                 padding: 2rem;
                 border-radius: 12px;
-                backdrop-filter: blur(5px);
             }
             [data-testid="stSidebar"] > div:first-child {
-                background-color: rgba(25, 25, 25, 0.9) !important;
-                color: #f1f1f1;
-            }
-            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
-                color: #e6e6e6 !important;
+                background-color: #111111 !important;
+                color: #FFFFFF;
             }
             .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
-                background-color: rgba(35, 35, 35, 0.85) !important;
+                background-color: #111111 !important;
+                color: #FFFFFF !important;
+            }
+            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
+                color: #FFFFFF !important;
             }
             .stDownloadButton, .stButton>button {
-                background-color: #1f78d1 !important;
-                color: #ffffff !important;
-                border: 1px solid #eeeeee !important;
+                background-color: #FF0000 !important;
+                color: #FFFFFF !important;
+                border: 1px solid #FFFFFF !important;
             }
             .stDownloadButton:hover, .stButton>button:hover {
-                background-color: #3692e6 !important;
-            } </style>
-            """,
+                background-color: #cc0000 !important;
+            }
+            </style>""",
             unsafe_allow_html=True
         )
     else:
         st.markdown(
-            """ <style>
+            """<style>
             .stApp {
-                background-image: url("https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg");
-                background-size: cover;
-                background-attachment: fixed;
-                background-position: center;
-                color: #222222;
-            }
-            .stApp:before {
-                content: "";
-                position: absolute;
-                top: 0; left: 0; right: 0; bottom: 0;
-                background-color: rgba(255, 255, 255, 0.75);
-                z-index: -1;
+                background-color: #FFFFFF;
+                color: #000000;
             }
             .main .block-container {
-                background-color: rgba(255, 255, 255, 0.9);
+                background-color: #FFFFFF;
                 padding: 2rem;
                 border-radius: 12px;
-                backdrop-filter: blur(4px);
             }
             [data-testid="stSidebar"] > div:first-child {
-                background-color: rgba(250, 250, 250, 0.9) !important;
-            }
-            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
-                color: #222222 !important;
+                background-color: #F0F0F0 !important;
+                color: #000000;
             }
             .st-bb, .st-at, .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj {
-                background-color: rgba(245, 245, 245, 0.95) !important;
+                background-color: #F5F5F5 !important;
+                color: #000000 !important;
+            }
+            .css-1d391kg, .css-1cpxqw2, .st-b7, .st-b8, .st-b9 {
+                color: #000000 !important;
             }
             .stDownloadButton, .stButton>button {
-                background-color: #2a6fdb !important;
-                color: white !important;
+                background-color: #FF0000 !important;
+                color: #FFFFFF !important;
                 border: none !important;
             }
             .stDownloadButton:hover, .stButton>button:hover {
-                background-color: #488cf7 !important;
-            } </style>
-            """,
+                background-color: #cc0000 !important;
+            }
+            </style>""",
             unsafe_allow_html=True
         )
 
@@ -194,41 +174,11 @@ with st.spinner("Making predictions..."):
 st.subheader("🔢 Model Predictions")
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.markdown(
-        f""" <div style="
-             background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
-             padding: 1.5rem;
-             border-radius: 10px;
-             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-             text-align: center;
-         "> <h3 style="margin-top: 0;">Random Forest</h3> <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{rf_pred:.2f} MW</h2> </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.metric("Random Forest", f"{rf_pred:.2f} MW")
 with col2:
-    st.markdown(
-        f""" <div style="
-             background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
-             padding: 1.5rem;
-             border-radius: 10px;
-             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-             text-align: center;
-         "> <h3 style="margin-top: 0;">XGBoost</h3> <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{xgb_pred:.2f} MW</h2> </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.metric("XGBoost", f"{xgb_pred:.2f} MW")
 with col3:
-    st.markdown(
-        f""" <div style="
-             background-color: {'rgba(30, 30, 30, 0.7)' if st.session_state.dark_mode else 'rgba(240, 240, 240, 0.8)'};
-             padding: 1.5rem;
-             border-radius: 10px;
-             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-             text-align: center;
-         "> <h3 style="margin-top: 0;">Ensemble (Weight: 65% RF / 35% XGB)</h3> <h2 style="color: {'#4a8af4' if st.session_state.dark_mode else '#2a6fdb'};">{ensemble_pred:.2f} MW</h2> <p style="margin-bottom: 0; font-size: 0.9rem;">{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg</p> </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.metric("Ensemble (65% RF / 35% XGB)", f"{ensemble_pred:.2f} MW", f"{(ensemble_pred - (rf_pred + xgb_pred)/2):.2f} vs avg")
 
 # Batch prediction
 st.markdown("---")
