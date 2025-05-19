@@ -8,13 +8,38 @@ from io import StringIO
 # --- Add CSS for bigger and colored + / - buttons ---
 st.markdown("""
 <style>
-button[data-testid^="stButton"] > div > span {
-    font-size: 24px !important;  /* Make + and − bigger */
+/* Style all buttons (including + and -) */
+button[data-testid="stButton"] {
+    font-size: 24px !important;
     font-weight: bold !important;
-    color: #e60000 !important; /* Bright red for visibility */
+    color: #e60000 !important;  /* Bright red */
+    background-color: transparent !important;
+    border: 2px solid #e60000 !important;
+    border-radius: 8px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    line-height: 1 !important;
 }
-button[data-testid^="stButton"]:hover > div > span {
-    color: #ff4d4d !important;  /* lighter red on hover */
+
+/* On hover, lighten color */
+button[data-testid="stButton"]:hover {
+    color: #ff4d4d !important;
+    border-color: #ff4d4d !important;
+    background-color: rgba(230, 0, 0, 0.1) !important;
+}
+
+/* Center the text inside the buttons */
+button[data-testid="stButton"] > div {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+/* Make the + and - signs bigger */
+button[data-testid="stButton"] > div > span {
+    font-size: 28px !important;
+    font-weight: bold !important;
 }
 </style>
 """, unsafe_allow_html=True)
