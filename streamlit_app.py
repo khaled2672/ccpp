@@ -11,7 +11,7 @@ def set_theme(dark):
         st.markdown(
             """<style>
             .stApp {
-                background-image: url("https://img.freepik.com/free-photo/view-nuclear-power-plant-with-towers-letting-out-steam-from-process_23-2150957658.jpg");
+                background-image: url("https://drive.google.com/file/d/1GQ78jS9qJhrVsGGJ4r3J7DD9CjByCeKB/view?usp=drive_link");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
