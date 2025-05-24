@@ -11,7 +11,7 @@ def set_theme(dark):
         st.markdown(
             """<style>
             .stApp {
-                background-image: url("https://lens.usercontent.google.com/image?vsrid=CNmQwcP-xfqEJhACGAEiJDNkMWU1ZGQ3LWNlNjYtNDhkYi05MzZjLTFiNzQzY2ZiMmRiMTjClOWP7ruNAw&gsessionid=K5o5QmqQEX-bvTkK3ajzJ_enhpZI2DW5ZsOMqF8XtgBsZExCIfRcUQ");
+                background-image: url("https://img1.wsimg.com/isteam/getty/2007232407/:/rs=w:1750,h:1000,cg:true,m/cr=w:1750,h:1000");
                 background-size: cover;
                 background-attachment: fixed;
                 background-position: center;
