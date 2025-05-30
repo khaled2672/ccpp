@@ -5,7 +5,7 @@ from sklearn.linear_model import LinearRegression
 # Load and train the model (cache to avoid retraining)
 @st.cache_data
 def load_and_train_model():
-    df = pd.read_csv('/content/data/data_with_fuel_consumption.csv')
+    df = pd.read_csv('data_with_fuel_consumption.csv')
     df = df.dropna(subset=['Total Power', 'Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure', 'Fuel_Consumption_MMBtu'])
     X = df[['Total Power', 'Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure']]
     y = df['Fuel_Consumption_MMBtu']
