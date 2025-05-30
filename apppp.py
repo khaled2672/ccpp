@@ -349,3 +349,28 @@ st.caption("""
 Developed with Streamlit | Optimized with Particle Swarm Optimization (PSO)  
 Model weights: Random Forest (65%), XGBoost (35%)
 """)
+st.title("CCPP Economic Analysis Dashboard")
+
+power_output = st.number_input("Power Output (MW)", min_value=0.0, value=100.0)
+ambient_temp = st.number_input("Ambient Temperature (°C)", value=25.0)
+ambient_humidity = st.number_input("Ambient Relative Humidity (%)", min_value=0.0, max_value=100.0, value=50.0)
+ambient_pressure = st.number_input("Ambient Pressure (kPa)", value=101.3)
+
+fuel_price = st.number_input("Fuel Price ($/MMBtu)", min_value=0.0, value=3.5)
+variable_om_cost = st.number_input("Variable O&M Cost ($/MWh)", min_value=0.0, value=2.0)
+market_price = st.number_input("Market Price ($/MWh)", min_value=0.0, value=50.0)
+
+if st.button("Calculate Economics"):
+    predicted_fuel_consumption = predict_fuel_consumption(power_output, ambient_temp, ambient_humidity, ambient_pressure, model)
+    fuel_cost = calculate_fuel_cost(predicted_fuel_consumption, fuel_price)
+    total_variable_cost = calculate_total_variable_cost(fuel_cost, variable_om_cost, power_output)
+    revenue = calculate_revenue(power_output, market_price)
+    profit_per_hour, profit_per_mwh = calculate_profitability_metrics(power_output, total_variable_cost, revenue, market_price)
+
+    st.subheader("Results")
+    st.write(f"**Predicted Fuel Consumption (MMBtu):** {predicted_fuel_consumption:.2f}")
+    st.write(f"**Fuel Cost ($):** {fuel_cost:.2f}")
+    st.write(f"**Total Variable Cost ($):** {total_variable_cost:.2f}")
+    st.write(f"**Revenue ($):** {revenue:.2f}")
+    st.write(f"**Profit per Hour ($):** {profit_per_hour:.2f}")
+    st.write(f"**Profit per MWh ($/MWh):** {profit_per_mwh:.2f}")
