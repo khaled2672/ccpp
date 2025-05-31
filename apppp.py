@@ -4,9 +4,12 @@ from sklearn.linear_model import LinearRegression
 
 # Load and train the model (cache to avoid retraining)
 @st.cache_data
-def load_and_train_model():
-    df = pd.read_csv('data_with_fuel_consumption.csv')
+def load_and_train_model(csv_file='data_with_fuel_consumption.csv'):
+    # Load your dataset — replace this CSV file for a different plant/country
+    df = pd.read_csv(csv_file)
+    # Drop rows with missing values in relevant columns
     df = df.dropna(subset=['Total Power', 'Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure', 'Fuel_Consumption_MMBtu'])
+    
     X = df[['Total Power', 'Ambient Temperature', 'Ambient Relative Humidity', 'Ambient Pressure']]
     y = df['Fuel_Consumption_MMBtu']
     model = LinearRegression()
@@ -41,14 +44,19 @@ def calculate_profitability_metrics(power_output_mw, total_variable_cost, revenu
 
 st.title("CCPP Economic Analysis Dashboard")
 
+# Currency selector
+currency = st.selectbox("Select Currency", ["USD ($)", "EUR (€)", "INR (₹)", "JPY (¥)", "GBP (£)"])
+currency_symbol = currency.split('(')[1][0]  # e.g. $, €, ₹, ¥, £
+
+# Input fields with units
 power_output = st.number_input("Power Output (MW)", min_value=0.0, value=100.0)
 ambient_temp = st.number_input("Ambient Temperature (°C)", value=25.0)
 ambient_humidity = st.number_input("Ambient Relative Humidity (%)", min_value=0.0, max_value=100.0, value=50.0)
 ambient_pressure = st.number_input("Ambient Pressure (kPa)", value=101.3)
 
-fuel_price = st.number_input("Fuel Price ($/MMBtu)", min_value=0.0, value=3.5)
-variable_om_cost = st.number_input("Variable O&M Cost ($/MWh)", min_value=0.0, value=2.0)
-market_price = st.number_input("Market Price ($/MWh)", min_value=0.0, value=50.0)
+fuel_price = st.number_input(f"Fuel Price ({currency_symbol}/MMBtu)", min_value=0.0, value=3.5)
+variable_om_cost = st.number_input(f"Variable O&M Cost ({currency_symbol}/MWh)", min_value=0.0, value=2.0)
+market_price = st.number_input(f"Market Price ({currency_symbol}/MWh)", min_value=0.0, value=50.0)
 
 if st.button("Calculate Economics"):
     predicted_fuel_consumption = predict_fuel_consumption(power_output, ambient_temp, ambient_humidity, ambient_pressure, model)
@@ -59,8 +67,8 @@ if st.button("Calculate Economics"):
 
     st.subheader("Results")
     st.write(f"**Predicted Fuel Consumption (MMBtu):** {predicted_fuel_consumption:.2f}")
-    st.write(f"**Fuel Cost ($):** {fuel_cost:.2f}")
-    st.write(f"**Total Variable Cost ($):** {total_variable_cost:.2f}")
-    st.write(f"**Revenue ($):** {revenue:.2f}")
-    st.write(f"**Profit per Hour ($):** {profit_per_hour:.2f}")
-    st.write(f"**Profit per MWh ($/MWh):** {profit_per_mwh:.2f}")
+    st.write(f"**Fuel Cost ({currency_symbol}):** {fuel_cost:.2f}")
+    st.write(f"**Total Variable Cost ({currency_symbol}):** {total_variable_cost:.2f}")
+    st.write(f"**Revenue ({currency_symbol}):** {revenue:.2f}")
+    st.write(f"**Profit per Hour ({currency_symbol}):** {profit_per_hour:.2f}")
+    st.write(f"**Profit per MWh ({currency_symbol}/MWh):** {profit_per_mwh:.2f}")
